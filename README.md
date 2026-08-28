@@ -13,7 +13,7 @@ Open the local URL printed by Vite. Drag to orbit, scroll to zoom, and right-dra
 
 ## Live demo
 
-https://rbilsland.github.io/interactive-3d-planetarium-mirror-projection-simulator/
+https://domecast.github.io/Simulator/
 
 Pushes to `main` run tests, build the site, and deploy it to GitHub Pages automatically.
 
