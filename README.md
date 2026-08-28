@@ -19,7 +19,8 @@ Pushes to `main` run tests, build the site, and deploy it to GitHub Pages automa
 
 ## Features
 
-- Adjustable dome and mirror diameters, plus projector geometry in meters
+- Adjustable dome and mirror diameters, a cylindrical straight section that lifts the hemisphere off the floor, plus projector geometry in meters
+- Inner dome colour for the hemisphere and straight-section walls, with the source image projected on top of that surface
 - Mirror pitch-down, projector pitch, diagonal FOV, aspect ratio, and vertical lens shift
 - Horizontal lens shift stays locked at zero to keep a symmetrical centre-line image
 - Exact ray/sphere intersections and specular reflection
@@ -59,7 +60,7 @@ The live source preview uses the same footprint detection: it traces and tessell
 
 ## Coordinate system
 
-The simulation uses meters with `Z` up. The dome is centered at the origin with its base on `Z = 0`. The mirror stays in contact with the rear of the dome shell at any height: its rear face is flat, so it is pushed back until the top of that face meets the shell, sliding forward along the curve as its height rises. The projector faces backward toward it. **Mirror distance** is the gap from the front of the mirror (dome-facing optical surface) to the front of the projector chassis; `0` means they touch, and the maximum places the projector front at the dome mid-plane (`Y = 0`). Both the mirror and the projector can be dropped to floor level.
+The simulation uses meters with `Z` up. The dome is a hemisphere whose equator sits on a cylindrical **straight section** (springline) of adjustable height; the floor remains `Z = 0`, and a height of `0` seats the hemisphere on the ground as before. The hemisphere is centered on the vertical axis at the top of that wall. The inner hemisphere and straight-section walls use a matte **inner colour** (default `#11053b`) so the cavity reads clearly from outside; a loaded source image is drawn on top of that surface where the projector footprint lands. The mirror stays in contact with the rear of the dome shell at any height: its rear face is flat, so it is pushed back until the top of that face meets the shell, sliding forward along the curve as its height rises. Below the equator it meets the cylindrical wall instead. The projector faces backward toward it. **Mirror distance** is the gap from the front of the mirror (dome-facing optical surface) to the front of the projector chassis; `0` means they touch, and the maximum places the projector front at the dome mid-plane (`Y = 0`). Both the mirror and the projector can be dropped to floor level.
 
 ## Verification
 

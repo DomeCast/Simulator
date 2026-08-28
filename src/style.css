@@ -373,6 +373,14 @@ h1 span {
   background: linear-gradient(90deg, #2f8c80, var(--cyan));
 }
 
+.gui-mount .lil-gui .lil-controller.lil-color .lil-display {
+  border-radius: 3px;
+}
+
+.gui-mount .lil-gui .lil-controller.lil-color input {
+  color: #b9f8e9;
+}
+
 .hint {
   display: flex;
   gap: 11px;

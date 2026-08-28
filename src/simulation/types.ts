@@ -15,6 +15,10 @@ export interface GridBounds {
 
 export interface SimulationParameters {
   domeDiameter: number
+  /** Vertical cylindrical wall under the hemisphere, in meters (`0` = floor-seated). */
+  springlineHeight: number
+  /** Inner dome and springline wall colour, as `#rrggbb`. */
+  domeInteriorColor: string
   mirrorDiameter: number
   mirrorHeight: number
   /** Mirror pitch-down angle in degrees (`0` = upright). */

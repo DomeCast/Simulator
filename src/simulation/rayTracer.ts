@@ -80,6 +80,15 @@ export function getDomeRadius(params: SimulationParameters): number {
   return params.domeDiameter * 0.5
 }
 
+export function getSpringlineHeight(params: SimulationParameters): number {
+  return Math.max(0, params.springlineHeight)
+}
+
+/** Centre of the hemispherical shell; sits on top of the straight section. */
+export function getDomeCenter(params: SimulationParameters): Vector3 {
+  return new Vector3(0, 0, getSpringlineHeight(params))
+}
+
 export function getMirrorRadius(params: SimulationParameters): number {
   return params.mirrorDiameter * 0.5
 }
@@ -87,13 +96,20 @@ export function getMirrorRadius(params: SimulationParameters): number {
 export function getMirrorCenter(params: SimulationParameters): Vector3 {
   const domeRadius = getDomeRadius(params)
   const mirrorRadius = getMirrorRadius(params)
-  const maxHeight = Math.max(0, domeRadius - mirrorRadius)
+  const springline = getSpringlineHeight(params)
+  const maxHeight = Math.max(0, springline + domeRadius - mirrorRadius)
   const height = Math.min(params.mirrorHeight, maxHeight)
   const contactHeight = height + mirrorRadius
+  const relativeZ = contactHeight - springline
+
+  // Below the hemisphere equator the shell is a cylinder of radius `domeRadius`.
+  if (relativeZ < 0) {
+    return new Vector3(0, -domeRadius, height)
+  }
 
   return new Vector3(
     0,
-    -Math.sqrt(Math.max(0, domeRadius ** 2 - contactHeight ** 2)),
+    -Math.sqrt(Math.max(0, domeRadius ** 2 - relativeZ ** 2)),
     height,
   )
 }
@@ -332,7 +348,7 @@ function calculateCoverage(rays: TracedRay[], params: SimulationParameters): num
   const coveredArea = litPatchArea(
     rays,
     (ray) => ray?.domeHit ?? null,
-    new Vector3(),
+    getDomeCenter(params),
     domeRadius,
     params,
   )
@@ -369,6 +385,8 @@ export function traceProjection(
   const rays: TracedRay[] = []
   const mirrorCenter = getMirrorCenter(params)
   const projectorCenter = getProjectorCenter(params)
+  const domeCenter = getDomeCenter(params)
+  const springline = getSpringlineHeight(params)
   const pitchRadians = (params.projectorPitch * Math.PI) / 180
   const pitchRotation = new Euler(pitchRadians, 0, 0, 'XYZ')
   const rowStart = options.gridBounds?.minRow ?? 0
@@ -426,7 +444,7 @@ export function traceProjection(
       const domeDistance = raySphereDistance(
         mirrorHit.clone().addScaledVector(reflectedDirection, EPSILON * 2),
         reflectedDirection,
-        new Vector3(),
+        domeCenter,
         getDomeRadius(params),
       )
 
@@ -438,7 +456,7 @@ export function traceProjection(
       const domeHit = mirrorHit
         .clone()
         .addScaledVector(reflectedDirection, domeDistance)
-      if (domeHit.z < 0) {
+      if (domeHit.z < springline - EPSILON) {
         rays.push(ray)
         continue
       }

@@ -40,6 +40,8 @@ const ASPECT_RATIOS: AspectRatio[] = ['16:9', '16:10', '4:3']
 /** Preserves the previous default layout: 1.5 m centre-to-centre ≈ 0.51 m front-to-front. */
 const DEFAULT_PARAMETERS: SimulationParameters = {
   domeDiameter: 10,
+  springlineHeight: 0,
+  domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
   mirrorPitch: 0,
@@ -106,6 +108,19 @@ function boolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
 
+/** Accepts `#rgb` or `#rrggbb`; anything else falls back to the screen default. */
+function hexColor(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback
+  const trimmed = value.trim()
+  const short = /^#([0-9a-fA-F]{3})$/.exec(trimmed)
+  if (short) {
+    const [r, g, b] = short[1]
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase()
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed.toLowerCase()
+  return fallback
+}
+
 export function sanitizeParameters(
   raw: unknown,
   options: {
@@ -155,6 +170,14 @@ export function sanitizeParameters(
 
   const draft: SimulationParameters = {
     domeDiameter,
+    springlineHeight: Math.min(
+      3,
+      Math.max(0, finite(source.springlineHeight, DEFAULT_PARAMETERS.springlineHeight)),
+    ),
+    domeInteriorColor: hexColor(
+      source.domeInteriorColor,
+      DEFAULT_PARAMETERS.domeInteriorColor,
+    ),
     mirrorDiameter,
     mirrorHeight: finite(source.mirrorHeight, DEFAULT_PARAMETERS.mirrorHeight),
     mirrorPitch: Math.min(

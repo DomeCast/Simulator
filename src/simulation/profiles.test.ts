@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createProfileStore, MemoryStorage } from './profiles'
+import { createProfileStore, MemoryStorage, sanitizeParameters } from './profiles'
 import type { DisplayOptions, SimulationParameters } from './types'
 
 const parameters: SimulationParameters = {
   domeDiameter: 12,
+  springlineHeight: 0.4,
+  domeInteriorColor: '#c4bfb6',
   mirrorDiameter: 1.6,
   mirrorHeight: 0.4,
   mirrorPitch: 12,
@@ -38,9 +40,24 @@ describe('saved profiles', () => {
     expect(listed[0].name).toBe('Hall A')
     expect(listed[0].id).toBe(saved.id)
     expect(store.load(saved.id)?.parameters.domeDiameter).toBe(12)
+    expect(store.load(saved.id)?.parameters.springlineHeight).toBe(0.4)
+    expect(store.load(saved.id)?.parameters.domeInteriorColor).toBe('#c4bfb6')
     expect(store.load(saved.id)?.parameters.mirrorPitch).toBe(12)
     expect(store.load(saved.id)?.parameters.lensShiftHorizontal).toBe(0)
     expect(store.load(saved.id)?.display.showRays).toBe(false)
+  })
+
+  it('accepts #rgb and #rrggbb inner colours and rejects the rest', () => {
+    expect(sanitizeParameters({ domeInteriorColor: '#C4BFB6' }).domeInteriorColor).toBe(
+      '#c4bfb6',
+    )
+    expect(sanitizeParameters({ domeInteriorColor: '#abc' }).domeInteriorColor).toBe(
+      '#aabbcc',
+    )
+    expect(sanitizeParameters({ domeInteriorColor: 'red' }).domeInteriorColor).toBe(
+      '#11053b',
+    )
+    expect(sanitizeParameters({}).domeInteriorColor).toBe('#11053b')
   })
 
   it('overwrites a profile of the same name', () => {
@@ -89,6 +106,7 @@ describe('saved profiles', () => {
     const loaded = store.load('abc')
     expect(loaded?.parameters.domeDiameter).toBe(14)
     expect(loaded?.parameters.mirrorDiameter).toBe(1.3)
+    expect(loaded?.parameters.domeInteriorColor).toBe('#11053b')
     expect(loaded?.parameters.aspectRatio).toBe('16:9')
     expect(loaded?.display.showRays).toBe(false)
     expect(loaded?.display.showGround).toBe(true)
@@ -174,6 +192,8 @@ describe('saved profiles', () => {
     expect(loaded?.parameters.projectorDistance).toBeCloseTo(0.51)
     expect(loaded?.parameters.domeDiameter).toBe(10)
     expect(loaded?.parameters.mirrorDiameter).toBeCloseTo(1.3)
+    expect(loaded?.parameters.springlineHeight).toBe(0)
+    expect(loaded?.parameters.domeInteriorColor).toBe('#11053b')
     expect(storage.getItem('domecast.profiles.v3')).toBeTruthy()
     expect(storage.getItem('domecast.profiles.v1')).toBeNull()
   })

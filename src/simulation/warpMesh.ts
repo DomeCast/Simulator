@@ -1,4 +1,4 @@
-import { aspectRatioValue, traceProjection } from './rayTracer'
+import { aspectRatioValue, getDomeCenter, traceProjection } from './rayTracer'
 import {
   directionToSourceUV,
   formatMeshNumber,
@@ -293,7 +293,11 @@ export function buildWarpMesh(
       const ray = byGrid.get(`${rayColumn}:${rayRow}`)
 
       if (isMeshUsableRay(ray, includeOccluded)) {
-        const uv = directionToSourceUV(ray.domeHit, sourceProjection, orientation)
+        const uv = directionToSourceUV(
+          ray.domeHit.clone().sub(getDomeCenter(params)),
+          sourceProjection,
+          orientation,
+        )
         nodes.push({
           x,
           y,

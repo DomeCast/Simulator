@@ -40,11 +40,13 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { directionToSourceUV, detectSourceProjection } from '../simulation/equirect'
 import {
+  getDomeCenter,
   getDomeRadius,
   getMirrorCenter,
   getMirrorRadius,
   getMirrorRotation,
   getProjectorCenter,
+  getSpringlineHeight,
   traceProjection,
 } from '../simulation/rayTracer'
 import { isMeshUsableRay, expandGridBounds, scaleGridBounds, getUsableRayGridBounds } from '../simulation/warpMesh'
@@ -101,7 +103,9 @@ export class PlanetariumScene {
   private readonly domeShell: Mesh
   private readonly domeWireframe: LineSegments
   private readonly domeRim: Mesh
-  private readonly domeDefaultMaterial: MeshPhysicalMaterial
+  private readonly domeSpringline: Mesh
+  private readonly domeSpringlineWire: LineSegments
+  private readonly domeDefaultMaterial: MeshBasicMaterial
   private readonly projectedImage: Mesh
   private readonly projectedImageMaterial: MeshBasicMaterial
   private readonly ground: Mesh
@@ -160,27 +164,29 @@ export class PlanetariumScene {
     rimLight.position.set(-5, -7, 4)
     this.scene.add(rimLight)
 
-    this.domeDefaultMaterial = new MeshPhysicalMaterial({
-      color: 0x6484a9,
-      transparent: true,
-      opacity: 0.17,
-      roughness: 0.86,
-      metalness: 0.05,
+    this.domeDefaultMaterial = new MeshBasicMaterial({
+      color: 0x11053b,
       side: BackSide,
-      depthWrite: false,
+      depthWrite: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     })
     this.projectedImageMaterial = new MeshBasicMaterial({
       map: null,
       side: BackSide,
-      transparent: true,
-      opacity: 0.94,
-      depthWrite: false,
+      depthWrite: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
     })
 
     const dome = this.createDome()
     this.domeShell = dome.shell
     this.domeWireframe = dome.wireframe
     this.domeRim = dome.rim
+    this.domeSpringline = dome.springline
+    this.domeSpringlineWire = dome.springlineWire
 
     this.projectedImage = this.createProjectedImage()
 
@@ -219,12 +225,26 @@ export class PlanetariumScene {
   ): TraceResult {
     const result = traceProjection(params)
     const domeRadius = getDomeRadius(params)
+    const springline = getSpringlineHeight(params)
     const mirrorRadius = getMirrorRadius(params)
 
     this.domeShell.scale.setScalar(domeRadius)
+    this.domeShell.position.z = springline
     this.domeWireframe.scale.setScalar(domeRadius)
+    this.domeWireframe.position.z = springline
     this.domeRim.scale.set(domeRadius, 1, domeRadius)
+    this.domeRim.position.z = springline
+    this.domeDefaultMaterial.color.set(params.domeInteriorColor)
     this.domeShell.material = this.domeDefaultMaterial
+    this.domeSpringline.material = this.domeDefaultMaterial
+
+    const showSpringline = springline > 1e-4
+    this.domeSpringline.visible = showSpringline
+    this.domeSpringlineWire.visible = showSpringline
+    this.domeSpringline.scale.set(domeRadius, springline, domeRadius)
+    this.domeSpringline.position.z = springline * 0.5
+    this.domeSpringlineWire.scale.copy(this.domeSpringline.scale)
+    this.domeSpringlineWire.position.copy(this.domeSpringline.position)
 
     const insideDome = this.viewMode === 'dome'
     this.ground.scale.setScalar(domeRadius * 1.08)
@@ -245,7 +265,7 @@ export class PlanetariumScene {
     }
 
     // Sits just inside the shell so it never z-fights with the dome surface.
-    this.apexMarker.position.z = domeRadius * 0.995
+    this.apexMarker.position.z = springline + domeRadius * 0.995
     this.apexMarker.scale.setScalar(domeRadius * 0.05)
     this.apexMarker.visible = display.showApexMarker && this.viewMode === 'dome'
 
@@ -301,7 +321,7 @@ export class PlanetariumScene {
         )
         this.writeProjectedImage(
           preview.rays,
-          domeRadius,
+          params,
           orientation,
           !display.excludeOccludedFromMesh,
           previewBounds,
@@ -441,6 +461,8 @@ export class PlanetariumScene {
     shell: Mesh
     wireframe: LineSegments
     rim: Mesh
+    springline: Mesh
+    springlineWire: LineSegments
   } {
     const geometry = new SphereGeometry(1, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2)
     geometry.rotateX(Math.PI / 2)
@@ -472,7 +494,26 @@ export class PlanetariumScene {
     rim.rotation.x = Math.PI / 2
     this.scene.add(rim)
 
-    return { shell, wireframe, rim }
+    const springlineGeometry = new CylinderGeometry(1, 1, 1, 64, 1, true)
+    const springline = new Mesh(springlineGeometry, this.domeDefaultMaterial)
+    springline.rotation.x = Math.PI / 2
+    springline.renderOrder = -2
+    springline.visible = false
+    this.scene.add(springline)
+
+    const springlineWire = new LineSegments(
+      new EdgesGeometry(springlineGeometry, 18),
+      new LineBasicMaterial({
+        color: 0x45627e,
+        transparent: true,
+        opacity: 0.28,
+      }),
+    )
+    springlineWire.rotation.x = Math.PI / 2
+    springlineWire.visible = false
+    this.scene.add(springlineWire)
+
+    return { shell, wireframe, rim, springline, springlineWire }
   }
 
   private createMirror(): void {
@@ -812,18 +853,23 @@ export class PlanetariumScene {
     )
 
     const lookup = new Map(rays.map((ray) => [`${ray.column}:${ray.row}`, ray]))
+    const domeCenter = getDomeCenter(params)
     const shrink = 1 - 0.006 / getDomeRadius(params)
     const linePositions = this.gridLinePositions
     const pointPositions = this.gridPointPositions
     let lineOffset = 0
     let pointOffset = 0
 
+    const inset = (hit: Vector3) =>
+      domeCenter.clone().addScaledVector(hit.clone().sub(domeCenter), shrink)
+
     for (const ray of rays) {
       if (!ray.domeHit) continue
 
-      const x = ray.domeHit.x * shrink
-      const y = ray.domeHit.y * shrink
-      const z = ray.domeHit.z * shrink
+      const point = inset(ray.domeHit)
+      const x = point.x
+      const y = point.y
+      const z = point.z
       pointPositions[pointOffset] = x
       pointPositions[pointOffset + 1] = y
       pointPositions[pointOffset + 2] = z
@@ -834,12 +880,13 @@ export class PlanetariumScene {
 
       for (const neighbour of [right, below]) {
         if (!neighbour) continue
+        const other = inset(neighbour)
         linePositions[lineOffset] = x
         linePositions[lineOffset + 1] = y
         linePositions[lineOffset + 2] = z
-        linePositions[lineOffset + 3] = neighbour.x * shrink
-        linePositions[lineOffset + 4] = neighbour.y * shrink
-        linePositions[lineOffset + 5] = neighbour.z * shrink
+        linePositions[lineOffset + 3] = other.x
+        linePositions[lineOffset + 4] = other.y
+        linePositions[lineOffset + 5] = other.z
         lineOffset += 6
       }
     }
@@ -854,7 +901,7 @@ export class PlanetariumScene {
    */
   private writeProjectedImage(
     rays: TracedRay[],
-    domeRadius: number,
+    params: SimulationParameters,
     orientation: SourceOrientation,
     includeOccluded: boolean,
     gridBounds: GridBounds,
@@ -879,7 +926,8 @@ export class PlanetariumScene {
     )
 
     const lookup = new Map(rays.map((ray) => [`${ray.column}:${ray.row}`, ray]))
-    const shrink = 1 - 0.008 / domeRadius
+    const domeCenter = getDomeCenter(params)
+    const shrink = 1 - 0.008 / getDomeRadius(params)
     const positions = this.projectedPositions
     const uvs = this.projectedUvs
     let vertexOffset = 0
@@ -887,11 +935,13 @@ export class PlanetariumScene {
 
     const sample = (ray: TracedRay | undefined) => {
       if (!isMeshUsableRay(ray, includeOccluded)) return null
-      const uv = directionToSourceUV(ray.domeHit, sourceProjection, orientation)
+      const direction = ray.domeHit.clone().sub(domeCenter)
+      const uv = directionToSourceUV(direction, sourceProjection, orientation)
+      const inset = domeCenter.clone().addScaledVector(direction, shrink)
       return {
-        x: ray.domeHit.x * shrink,
-        y: ray.domeHit.y * shrink,
-        z: ray.domeHit.z * shrink,
+        x: inset.x,
+        y: inset.y,
+        z: inset.z,
         u: uv.u,
         v: uv.v,
       }

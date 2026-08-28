@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Vector3 } from 'three'
 import {
+  getDomeCenter,
   getMaxProjectorDistance,
   getMirrorCenter,
   getMirrorFrontY,
@@ -18,6 +19,8 @@ import type { SimulationParameters } from './types'
 
 const defaults: SimulationParameters = {
   domeDiameter: 10,
+  springlineHeight: 0,
+  domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
   mirrorPitch: 0,
@@ -69,7 +72,7 @@ describe('ray geometry', () => {
       expect(centre.x).toBe(0)
       expect(centre.y).toBeLessThanOrEqual(0)
       expect(centre.z).toBeCloseTo(Math.min(mirrorHeight, maxHeight))
-      expect(contact.length()).toBeCloseTo(domeRadius)
+      expect(contact.distanceTo(getDomeCenter(defaults))).toBeCloseTo(domeRadius)
     }
   })
 
@@ -93,7 +96,9 @@ describe('ray geometry', () => {
             ).multiplyScalar(mirrorRadius),
           )
 
-          expect(surfacePoint.length()).toBeLessThanOrEqual(domeRadius + 1e-6)
+          expect(
+            surfacePoint.distanceTo(getDomeCenter(params)),
+          ).toBeLessThanOrEqual(domeRadius + 1e-6)
         }
       }
     }
@@ -259,6 +264,48 @@ describe('projection trace', () => {
       Math.acos(Math.min(1, Math.max(-1, dir.dot(axis))))
 
     expect(angleFromAxis(widerCorner)).toBeGreaterThan(angleFromAxis(corner))
+  })
+})
+
+describe('springline', () => {
+  it('raises the hemispherical shell without changing dome diameter', () => {
+    const params = { ...defaults, springlineHeight: 1.2 }
+    const centre = getDomeCenter(params)
+
+    expect(centre.x).toBe(0)
+    expect(centre.y).toBe(0)
+    expect(centre.z).toBeCloseTo(1.2)
+  })
+
+  it('keeps the mirror on the hemisphere when contact is above the equator', () => {
+    const params = { ...defaults, springlineHeight: 0.8, mirrorHeight: 1.15 }
+    const centre = getMirrorCenter(params)
+    const contact = centre.clone().add(new Vector3(0, 0, params.mirrorDiameter * 0.5))
+
+    expect(contact.z).toBeGreaterThan(params.springlineHeight)
+    expect(contact.distanceTo(getDomeCenter(params))).toBeCloseTo(
+      params.domeDiameter * 0.5,
+    )
+  })
+
+  it('parks the mirror against the cylindrical wall below the equator', () => {
+    const params = { ...defaults, springlineHeight: 1.5, mirrorHeight: 0 }
+    const centre = getMirrorCenter(params)
+    const contact = centre.clone().add(new Vector3(0, 0, params.mirrorDiameter * 0.5))
+
+    expect(contact.z).toBeLessThan(params.springlineHeight)
+    expect(Math.hypot(contact.x, contact.y)).toBeCloseTo(params.domeDiameter * 0.5)
+  })
+
+  it('rejects dome hits below the raised horizon', () => {
+    const seated = traceProjection(defaults)
+    const raised = traceProjection({ ...defaults, springlineHeight: 1.5 })
+    const seatedHits = seated.rays.filter((ray) => ray.domeHit)
+    const raisedHits = raised.rays.filter((ray) => ray.domeHit)
+
+    expect(raisedHits.length).toBeGreaterThan(0)
+    expect(raisedHits.every((ray) => ray.domeHit!.z >= 1.5 - 1e-5)).toBe(true)
+    expect(raisedHits.length).toBeLessThanOrEqual(seatedHits.length)
   })
 })
 
