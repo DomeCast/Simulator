@@ -11,6 +11,10 @@ npm run dev
 
 Open the local URL printed by Vite. Drag to orbit, scroll to zoom, and right-drag to pan.
 
+## First-time user guide
+
+[USER_GUIDE.md](USER_GUIDE.md) walks through the screen, the rig controls, source preview, and how to save or export a setup.
+
 ## Live demo
 
 https://domecast.github.io/Simulator/
