@@ -6,7 +6,6 @@ import {
   BufferGeometry,
   CanvasTexture,
   CircleGeometry,
-  ClampToEdgeWrapping,
   Color,
   CylinderGeometry,
   DirectionalLight,
@@ -27,18 +26,17 @@ import {
   PlaneGeometry,
   Points,
   PointsMaterial,
-  RepeatWrapping,
   RingGeometry,
   Scene,
   SphereGeometry,
   SRGBColorSpace,
   Texture,
-  TextureLoader,
   Vector3,
   WebGLRenderer,
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { directionToSourceUV, detectSourceProjection } from '../simulation/equirect'
+import { directionToSourceUV } from '../simulation/equirect'
+import { createSourceTexture } from './sourceTexture'
 import {
   getDomeCenter,
   getDomeRadius,
@@ -127,7 +125,6 @@ export class PlanetariumScene {
   private projectedUvs = new Float32Array(0)
 
   private sourceTexture: Texture | null = null
-  private sourceObjectUrl: string | null = null
   private sourceProjection: SourceProjection | null = null
   private animationFrame = 0
   private contextLossCount = 0
@@ -391,51 +388,22 @@ export class PlanetariumScene {
   async setSourceImage(
     file: File,
   ): Promise<{ width: number; height: number; projection: SourceProjection }> {
-    const objectUrl = URL.createObjectURL(file)
-    try {
-      const texture = await new TextureLoader().loadAsync(objectUrl)
-      const image = texture.image as { width: number; height: number }
-      const projection = detectSourceProjection(image.width, image.height)
-      if (!projection) {
-        texture.dispose()
-        URL.revokeObjectURL(objectUrl)
-        throw new Error('INVALID_SOURCE_ASPECT')
-      }
+    const { texture, width, height, projection } = await createSourceTexture(file)
 
-      texture.colorSpace = SRGBColorSpace
-      // flipY keeps v=1 on the top row of the file, so the upper half of an
-      // equirect lands on the dome and the middle row sits on the horizon.
-      texture.flipY = true
-      texture.wrapS =
-        projection === 'equirectangular' ? RepeatWrapping : ClampToEdgeWrapping
-      texture.wrapT = ClampToEdgeWrapping
-      texture.needsUpdate = true
+    this.clearSourceImage()
+    this.sourceTexture = texture
+    this.sourceProjection = projection
+    this.projectedImageMaterial.map = texture
+    this.projectedImageMaterial.needsUpdate = true
 
-      this.clearSourceImage(false)
-      this.sourceObjectUrl = objectUrl
-      this.sourceTexture = texture
-      this.sourceProjection = projection
-      this.projectedImageMaterial.map = texture
-      this.projectedImageMaterial.needsUpdate = true
-
-      return { width: image.width, height: image.height, projection }
-    } catch (error) {
-      if (!(error instanceof Error && error.message === 'INVALID_SOURCE_ASPECT')) {
-        URL.revokeObjectURL(objectUrl)
-      }
-      throw error
-    }
+    return { width, height, projection }
   }
 
-  clearSourceImage(revokeUrl = true): void {
+  clearSourceImage(): void {
     if (this.sourceTexture) {
       this.sourceTexture.dispose()
       this.sourceTexture = null
     }
-    if (revokeUrl && this.sourceObjectUrl) {
-      URL.revokeObjectURL(this.sourceObjectUrl)
-    }
-    this.sourceObjectUrl = null
     this.sourceProjection = null
     this.projectedImageMaterial.map = null
     this.projectedImageMaterial.needsUpdate = true
