@@ -43,16 +43,21 @@ const parameters: SimulationParameters = {
 }
 
 describe('equirectangular mapping', () => {
-  it('maps the dome front to the panorama horizon', () => {
-    const uv = directionToEquirectUV(new Vector3(0, 1, 0))
-    // The baked 180° pitch puts the front on the wrap seam, which repeats.
-    expect(Math.min(uv.u, 1 - uv.u)).toBeCloseTo(0)
-    expect(uv.v).toBeCloseTo(0.5)
+  it('maps the dome front to the panorama centre on the horizon', () => {
+    const front = directionToEquirectUV(new Vector3(0, 1, 0))
+    const back = directionToEquirectUV(new Vector3(0, -1, 0))
+    expect(front.v).toBeCloseTo(0.5)
+    expect(back.v).toBeCloseTo(0.5)
+    expect(front.u).toBeCloseTo(0.5)
+    expect(Math.min(back.u, 1 - back.u)).toBeCloseTo(0)
   })
 
-  it('maps zenith to the far edge in latitude', () => {
-    const uv = directionToEquirectUV(new Vector3(0, 0, 1))
-    expect(uv.v).toBeCloseTo(1)
+  it('maps zenith to the top of the image so the dome uses the upper half', () => {
+    const zenith = directionToEquirectUV(new Vector3(0, 0, 1))
+    const horizon = directionToEquirectUV(new Vector3(0, 1, 0))
+    expect(zenith.v).toBeCloseTo(1)
+    expect(horizon.v).toBeCloseTo(0.5)
+    expect(zenith.v).toBeGreaterThan(horizon.v)
   })
 
   it('starts equirectangular sources upright without user pitch', () => {
@@ -83,8 +88,8 @@ describe('equirectangular mapping', () => {
     const domeRight = directionToEquirectUV(new Vector3(1, 0, 0))
     const domeLeft = directionToEquirectUV(new Vector3(-1, 0, 0))
 
-    expect(domeRight.u).toBeCloseTo(0.25)
-    expect(domeLeft.u).toBeCloseTo(0.75)
+    expect(domeRight.u).toBeCloseTo(0.75)
+    expect(domeLeft.u).toBeCloseTo(0.25)
   })
 })
 

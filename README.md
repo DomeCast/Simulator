@@ -48,7 +48,7 @@ Choose a source image under **Dome source image**. Aspect ratio selects the layo
 
 Any other aspect ratio is rejected. The image is held only for the current session through an object URL; named setups store geometry, display toggles, and orientation, but not the image file itself. Re-select the image after loading a saved setup.
 
-With **Source preview** enabled, the source is drawn only where valid projector rays hit the dome after reflecting from the mirror. Changing FOV, pitch, lens shift, or throw reshapes that footprint so you see what the projector would put on the sky — not the full hemisphere. **Source orientation** yaw/pitch/roll turn the image within that footprint. For equirectangular sources, longitude 0 faces the dome front (`+Y`) and latitude runs from horizon to zenith. For fisheye sources, the dome front maps toward the bottom of the frame.
+With **Source preview** enabled, the source is drawn only where valid projector rays hit the dome after reflecting from the mirror. Changing FOV, pitch, lens shift, or throw reshapes that footprint so you see what the projector would put on the sky — not the full hemisphere. **Source orientation** yaw/pitch/roll turn the image within that footprint. For equirectangular sources, the horizontal centre of the panorama faces the dome front (`+Y`). The top half of the image covers the hemisphere: the top edge is zenith and the middle row is the horizon. For fisheye sources, the dome front maps toward the bottom of the frame.
 
 **Download warp mesh** exports a Paul Bourke rectangular mesh in the same style as `standard_16x9.data.txt`:
 

@@ -403,6 +403,9 @@ export class PlanetariumScene {
       }
 
       texture.colorSpace = SRGBColorSpace
+      // flipY keeps v=1 on the top row of the file, so the upper half of an
+      // equirect lands on the dome and the middle row sits on the horizon.
+      texture.flipY = true
       texture.wrapS =
         projection === 'equirectangular' ? RepeatWrapping : ClampToEdgeWrapping
       texture.wrapT = ClampToEdgeWrapping

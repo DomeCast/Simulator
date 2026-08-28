@@ -71,28 +71,22 @@ export function warpMeshTypeForProjection(projection: SourceProjection): number 
 }
 
 /**
- * Baked-in pitch that lands an equirectangular source the same way up as a
- * fisheye one, so both start from a sensible orientation with the user-facing
- * pitch still reading 0.
- */
-const EQUIRECT_PITCH_OFFSET = 180
-
-/**
  * Converts a world-space dome direction into equirectangular UV coordinates.
- * Longitude 0 faces +Y (dome front). Latitude 0 is the horizon and +1 is zenith.
+ *
+ * The upper half of the 2:1 image covers the hemisphere: `v = 1` is zenith
+ * (top edge) and `v = 0.5` is the horizon (middle row). The image centre
+ * (`u = 0.5`) faces the dome front (`+Y`). The X-mirror in `applyOrientation`
+ * is undone on U so left/right still read correctly after the convex mirror.
  */
 export function directionToEquirectUV(
   direction: Vector3,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
 ): { u: number; v: number } {
-  const rotated = applyOrientation(direction, {
-    ...orientation,
-    pitch: orientation.pitch + EQUIRECT_PITCH_OFFSET,
-  })
+  const rotated = applyOrientation(direction, orientation)
   const longitude = Math.atan2(rotated.x, rotated.y)
   const latitude = Math.asin(MathUtils.clamp(rotated.z, -1, 1))
-  const u = MathUtils.euclideanModulo(longitude / TWO_PI + 0.5, 1)
-  const v = 0.5 - latitude / Math.PI
+  const u = MathUtils.euclideanModulo(0.5 - longitude / TWO_PI, 1)
+  const v = 0.5 + latitude / Math.PI
   return { u, v }
 }
 
