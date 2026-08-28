@@ -13,7 +13,7 @@ Open the local URL printed by Vite. Drag to orbit, scroll to zoom, and right-dra
 
 ## First-time user guide
 
-[USER_GUIDE.md](USER_GUIDE.md) walks through the screen, the rig controls, source preview, and how to save or export a setup.
+[USER_GUIDE.md](USER_GUIDE.md) walks through the screen, the rig controls, source preview, and how to save or export a setup. In the running app, **Guide** in the top bar opens the same document without leaving your current setup.
 
 ## Live demo
 

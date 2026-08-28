@@ -2,6 +2,8 @@
 
 This guide is for a first visit. The Simulator lets you design a single-projector planetarium: a convex spherical mirror throws the image onto the inside of a dome. You adjust the real-world sizes, watch the light paths, then export a setup for playback.
 
+In the app, open **Guide** in the top bar at any time — as a panel over the workspace, or in a new window. Your current rig stays as it is.
+
 Open the live app at https://domecast.github.io/Simulator/ or run it locally (`npm install` then `npm run dev`). Nothing you do is uploaded; work stays in this browser.
 
 ## What you are looking at

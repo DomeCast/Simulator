@@ -24,6 +24,7 @@ import type {
   SimulationParameters,
   SourceOrientation,
 } from './simulation/types'
+import { mountUserGuide, openUserGuide } from './userGuide/panel'
 
 const params: SimulationParameters = {
   domeDiameter: 10,
@@ -71,9 +72,20 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <h1>DomeCast <span>Simulator</span></h1>
         </div>
       </div>
-      <div class="status-pill">
-        <span class="pulse"></span>
-        Real-time ray trace
+      <div class="topbar-actions">
+        <button
+          type="button"
+          id="open-guide"
+          class="help-button"
+          aria-haspopup="dialog"
+          aria-controls="guide-dialog"
+        >
+          Guide
+        </button>
+        <div class="status-pill">
+          <span class="pulse"></span>
+          Real-time ray trace
+        </div>
       </div>
     </header>
 
@@ -298,6 +310,21 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </section>
     </section>
   </main>
+  <dialog id="guide-dialog" class="guide-dialog" aria-labelledby="guide-title">
+    <div class="guide-window">
+      <header class="guide-header">
+        <div>
+          <p class="eyebrow">First-time user</p>
+          <h2 id="guide-title">Using the Simulator</h2>
+        </div>
+        <div class="guide-header-actions">
+          <button type="button" id="guide-popout">Open in new window</button>
+          <button type="button" id="guide-close" class="icon-button" aria-label="Close guide">×</button>
+        </div>
+      </header>
+      <article id="guide-body" class="guide-body"></article>
+    </div>
+  </dialog>
 `
 
 const viewport = document.querySelector<HTMLElement>('#viewport')!
@@ -858,6 +885,12 @@ function updateSimulation(): void {
 updateSimulation()
 scene.resize()
 void document.fonts.ready.then(() => scene.resize())
+
+const guideDialog = document.querySelector<HTMLDialogElement>('#guide-dialog')!
+mountUserGuide(guideDialog)
+document.querySelector('#open-guide')!.addEventListener('click', () => {
+  openUserGuide(guideDialog)
+})
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
