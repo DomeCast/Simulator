@@ -136,6 +136,9 @@ export class PlanetariumScene {
     position: Vector3
     target: Vector3
   } | null = null
+  private viewportWidth = 0
+  private viewportHeight = 0
+  private readonly resizeObserver: ResizeObserver
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -205,6 +208,8 @@ export class PlanetariumScene {
     this.gridLines = beams.gridLines
     this.gridPoints = beams.gridPoints
 
+    this.resizeObserver = new ResizeObserver(this.resize)
+    this.resizeObserver.observe(this.container)
     this.resize()
     window.addEventListener('resize', this.resize)
     this.renderer.domElement.addEventListener(
@@ -1018,9 +1023,16 @@ export class PlanetariumScene {
   }
 
   readonly resize = (): void => {
-    const width = this.container.clientWidth
-    const height = this.container.clientHeight
-    this.camera.aspect = width / Math.max(height, 1)
+    const width = Math.round(this.container.clientWidth)
+    const height = Math.round(this.container.clientHeight)
+    // The first layout pass can still be 300×150 (the canvas default) or a
+    // 0-height percentage, which stretches the dome until a later refresh.
+    if (width < 2 || height < 2) return
+    if (width === this.viewportWidth && height === this.viewportHeight) return
+
+    this.viewportWidth = width
+    this.viewportHeight = height
+    this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height, false)
   }
@@ -1051,12 +1063,14 @@ export class PlanetariumScene {
     const context = this.renderer.getContext()
     if (context.isContextLost()) return
 
+    this.resize()
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }
 
   dispose(): void {
     cancelAnimationFrame(this.animationFrame)
+    this.resizeObserver.disconnect()
     window.removeEventListener('resize', this.resize)
     this.renderer.domElement.removeEventListener(
       'webglcontextlost',

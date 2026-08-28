@@ -856,6 +856,8 @@ function updateSimulation(): void {
 }
 
 updateSimulation()
+scene.resize()
+void document.fonts.ready.then(() => scene.resize())
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
