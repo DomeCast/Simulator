@@ -74,3 +74,11 @@ npm run build
 ```
 
 The math tests cover sphere intersections, reflection, component placement, ray classification, lens shift, named local saves, equirectangular mapping, and warp-mesh export.
+
+## License
+
+Copyright (C) 2026 Robert Bilsland
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE) (copyleft). You may use, modify, and share it under those terms.
+
+If you want to use this software for commercial purposes outside the scope of GPLv3 — for example in a closed-source or proprietary product — contact Robert Bilsland at [RCBilsland@GMail.com](mailto:RCBilsland@GMail.com) to arrange a commercial licence.
