@@ -109,7 +109,8 @@ export class PlanetariumScene {
   private readonly ground: Mesh
   private readonly groundGrid: GridHelper
   private readonly groundLabels: GroundLabel[]
-  private readonly apexMarker: Mesh
+  private readonly apexMarker: Group
+  private readonly apexLabelTexture: CanvasTexture
   private readonly mirror = new Group()
   private readonly projector = new Group()
   private readonly projectorLens: Mesh
@@ -195,7 +196,9 @@ export class PlanetariumScene {
     this.groundGrid = ground.grid
 
     this.groundLabels = this.createGroundLabels()
-    this.apexMarker = this.createApexMarker()
+    const apex = this.createApexMarker()
+    this.apexMarker = apex.group
+    this.apexLabelTexture = apex.labelTexture
 
     this.createMirror()
     this.projectorLens = this.createProjector()
@@ -268,7 +271,15 @@ export class PlanetariumScene {
 
     // Sits just inside the shell so it never z-fights with the dome surface.
     this.apexMarker.position.z = springline + domeRadius * 0.995
-    this.apexMarker.scale.setScalar(domeRadius * 0.05)
+    const apexRing = this.apexMarker.getObjectByName('apexRing')
+    const apexLabel = this.apexMarker.getObjectByName('apexLabel')
+    if (apexRing) apexRing.scale.setScalar(domeRadius * 0.05)
+    if (apexLabel) {
+      // Fill the ring's inner hole; canvas padding keeps the glyphs inside.
+      const hole = domeRadius * 0.05 * 0.78 * 2
+      apexLabel.position.set(0, 0, 0)
+      apexLabel.scale.set(hole * 0.92, hole * 0.92 * (96 / 256), 1)
+    }
     this.apexMarker.visible = display.showApexMarker && this.viewMode === 'dome'
 
     this.mirror.position.copy(getMirrorCenter(params))
@@ -606,11 +617,13 @@ export class PlanetariumScene {
   }
 
   /**
-   * Ring just inside the dome apex. Looking straight up from the centre gives
-   * no horizon to judge against, so this marks the zenith.
+   * Ring and TOP label just inside the dome apex. Looking straight up from the
+   * centre gives no horizon to judge against, so these mark the zenith.
    */
-  private createApexMarker(): Mesh {
-    const mesh = new Mesh(
+  private createApexMarker(): { group: Group; labelTexture: CanvasTexture } {
+    const group = new Group()
+
+    const ring = new Mesh(
       new RingGeometry(0.78, 1, 48),
       new MeshBasicMaterial({
         color: 0xc3f4ff,
@@ -620,10 +633,47 @@ export class PlanetariumScene {
         depthWrite: false,
       }),
     )
-    mesh.renderOrder = 1
-    this.scene.add(mesh)
+    ring.name = 'apexRing'
+    ring.renderOrder = 1
+    group.add(ring)
 
-    return mesh
+    const canvas = document.createElement('canvas')
+    canvas.width = 256
+    canvas.height = 96
+    const context = canvas.getContext('2d')
+    if (context) {
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      context.fillStyle = '#c3f4ff'
+      context.font = 'bold 72px "Helvetica Neue", Helvetica, Arial, sans-serif'
+      context.textAlign = 'center'
+      context.textBaseline = 'middle'
+      context.letterSpacing = '8px'
+      context.fillText('TOP', canvas.width / 2, canvas.height / 2)
+    }
+
+    const labelTexture = new CanvasTexture(canvas)
+    labelTexture.colorSpace = SRGBColorSpace
+    labelTexture.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
+
+    const label = new Mesh(
+      new PlaneGeometry(1, 1),
+      new MeshBasicMaterial({
+        map: labelTexture,
+        transparent: true,
+        opacity: 0.75,
+        depthWrite: false,
+        side: DoubleSide,
+      }),
+    )
+    label.name = 'apexLabel'
+    // Face the seated observer. After this flip, letter-tops point toward the
+    // back so the word reads upright when looking up from the front heading.
+    label.rotation.x = Math.PI
+    label.renderOrder = 1
+    group.add(label)
+
+    this.scene.add(group)
+    return { group, labelTexture }
   }
 
   private createGroundLabel(
@@ -1055,6 +1105,7 @@ export class PlanetariumScene {
     this.clearSourceImage()
     this.projectedImageMaterial.dispose()
     for (const label of this.groundLabels) label.texture.dispose()
+    this.apexLabelTexture.dispose()
 
     const geometries = new Set<BufferGeometry>()
     const materials = new Set<Material>()

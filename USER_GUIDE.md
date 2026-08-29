@@ -29,7 +29,7 @@ The **Live analysis** card (top right) updates as you change the rig. **Dome cov
 The **View** card (top left of the 3D view) has two cameras:
 
 - **Fly** — walk around the outside of the rig. Use this while you place the mirror and projector.
-- **Inside dome** — sit at the centre looking at the sky, as an audience member would. Ray bundles and the pixel grid turn off so the picture is easier to see. **Dome apex** (a small ring at the zenith) can be toggled here.
+- **Inside dome** — sit at the centre looking at the sky, as an audience member would. Ray bundles and the pixel grid turn off so the picture is easier to see. **Dome apex** (a small ring and the word TOP at the zenith) can be toggled here.
 
 **Viewport layers** hide or show the ray bundle, projector box, pixel grid, ground, source preview, and apex. Drag the strip between the control panel and the view if you want a wider workspace; double-click the strip to reset its width.
 
