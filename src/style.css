@@ -217,7 +217,7 @@ h1 span {
   z-index: 4;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   overflow: hidden;
   padding: 22px 20px 18px;
   border-right: 1px solid var(--line);
@@ -433,6 +433,23 @@ h1 span {
   color: #91a5b7;
   font-size: 10px;
   font-weight: 600;
+}
+
+.license-note {
+  margin: 10px 4px 0;
+  color: var(--muted);
+  font: 500 9px/1.4 'DM Mono', monospace;
+  letter-spacing: 0.06em;
+}
+
+.license-note a {
+  color: #91a5b7;
+  text-decoration: none;
+}
+
+.license-note a:hover,
+.license-note a:focus-visible {
+  color: var(--cyan);
 }
 
 .profiles {

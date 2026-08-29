@@ -233,6 +233,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <span>⌘</span>
           <p><strong>Navigate the model</strong><br>Drag to orbit · Scroll to zoom · Right-drag to pan</p>
         </div>
+        <p class="license-note">
+          Licensed under
+          <a
+            href="https://github.com/DomeCast/Simulator/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer"
+          >GPLv3</a>
+        </p>
       </aside>
 
       <div
