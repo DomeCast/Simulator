@@ -64,7 +64,7 @@ Watch coverage climb and orange overshoot fall as you close in on a layout. If b
 Open the **Source** tab.
 
 1. **Choose image** — only two layouts are accepted:
-   - Square (**1:1**), treated as a hemispherical fisheye (zenith in the centre, horizon on the circle)
+   - Square (**1:1**), treated as a hemispherical fisheye (zenith in the centre, horizon on the circle, front at the bottom)
    - Twice as wide as it is tall (**2:1**), treated as an equirectangular panorama. The top half covers the dome (zenith at the top edge, horizon across the middle) and the horizontal centre faces the front.
 2. Leave **Source preview** on in the View card. The picture appears only in the projector’s lit footprint, not across the whole dome. That is deliberate: it is what this rig would actually show.
 3. **Yaw**, **Pitch**, and **Roll** turn the image within that footprint. They stay locked until an image is loaded.

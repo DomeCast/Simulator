@@ -93,7 +93,8 @@ export function directionToEquirectUV(
 /**
  * Angular fisheye for a square fulldome master: zenith at the image centre,
  * horizon (dome base) on the inscribed circle that touches the mid-edges.
- * Azimuth 0 (+Y front) maps toward the bottom of the frame.
+ * Dome front (`+Y`) samples the bottom of the frame, matching the usual
+ * fulldome layout so a 180° yaw is not needed at load.
  */
 export function directionToFisheyeUV(
   direction: Vector3,
@@ -103,9 +104,10 @@ export function directionToFisheyeUV(
   const azimuth = Math.atan2(rotated.x, rotated.y)
   const polar = Math.acos(MathUtils.clamp(rotated.z, -1, 1))
   // polar = π/2 (horizon) → radius 0.5 (mid-edge of the square).
+  // +π puts azimuth 0 (dome front) on the bottom mid-edge.
   const radius = polar / Math.PI
-  const u = 0.5 + radius * Math.sin(azimuth)
-  const v = 0.5 + radius * Math.cos(azimuth)
+  const u = 0.5 - radius * Math.sin(azimuth)
+  const v = 0.5 - radius * Math.cos(azimuth)
   return { u, v }
 }
 

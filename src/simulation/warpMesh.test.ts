@@ -116,15 +116,26 @@ describe('fisheye mapping', () => {
   it('places the dome front on the bottom mid-edge at the horizon', () => {
     const uv = directionToFisheyeUV(new Vector3(0, 1, 0))
     expect(uv.u).toBeCloseTo(0.5)
-    expect(uv.v).toBeCloseTo(1)
+    expect(uv.v).toBeCloseTo(0)
+  })
+
+  it('starts with the front at the bottom so a 180° yaw is not the default', () => {
+    const front = directionToFisheyeUV(new Vector3(0, 1, 0))
+    const yawed = directionToFisheyeUV(new Vector3(0, 1, 0), {
+      yaw: 180,
+      pitch: 0,
+      roll: 0,
+    })
+    expect(front.v).toBeCloseTo(0)
+    expect(yawed.v).toBeCloseTo(1)
   })
 
   it('samples mirrored in azimuth so the reflected image reads correctly', () => {
     const domeRight = directionToFisheyeUV(new Vector3(1, 0, 0))
     const domeLeft = directionToFisheyeUV(new Vector3(-1, 0, 0))
 
-    expect(domeRight.u).toBeCloseTo(0)
-    expect(domeLeft.u).toBeCloseTo(1)
+    expect(domeRight.u).toBeCloseTo(1)
+    expect(domeLeft.u).toBeCloseTo(0)
   })
 })
 
