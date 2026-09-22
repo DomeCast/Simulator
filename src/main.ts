@@ -29,6 +29,7 @@ import { mountUserGuide, openUserGuide } from './userGuide/panel'
 const params: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
+  horizonLift: 0,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -362,7 +363,8 @@ const bind = <T extends { onChange: (fn: () => void) => unknown }>(controller: T
 
 const geometryFolder = rigGui.addFolder('Environment')
 bind(geometryFolder.add(params, 'domeDiameter', 5, 20, 0.1).name('Dome diameter · m'))
-bind(geometryFolder.add(params, 'springlineHeight', 0, 3, 0.05).name('Straight section · m'))
+bind(geometryFolder.add(params, 'springlineHeight', 0, 3, 0.05).name('Dome wall · m'))
+bind(geometryFolder.add(params, 'horizonLift', 0, 60, 0.1).name('Horizon lift · °'))
 bind(geometryFolder.addColor(params, 'domeInteriorColor').name('Inner colour'))
 const mirrorDiameterController = bind(
   geometryFolder.add(params, 'mirrorDiameter', 0.4, 3, 0.02).name('Mirror diameter · m'),
@@ -412,6 +414,22 @@ const rollController = bind(
   orientationFolder.add(orientation, 'roll', -180, 180, 0.5).name('Roll · °'),
 )
 
+const orientationActions = {
+  reset: () => {
+    orientation.yaw = 0
+    orientation.pitch = 0
+    orientation.roll = 0
+    yawController.updateDisplay()
+    pitchController.updateDisplay()
+    rollController.updateDisplay()
+    scheduleUpdate()
+  },
+}
+const resetOrientationController = orientationFolder
+  .add(orientationActions, 'reset')
+  .name('Reset yaw · pitch · roll')
+resetOrientationController.domElement.classList.add('action-row')
+
 const setOrientationControls = (
   mode: 'off' | 'fisheye' | 'equirectangular',
 ): void => {
@@ -419,8 +437,11 @@ const setOrientationControls = (
     yawController.disable()
     pitchController.disable()
     rollController.disable()
+    resetOrientationController.disable()
     return
   }
+
+  resetOrientationController.enable()
 
   yawController.enable()
   if (mode === 'fisheye') {

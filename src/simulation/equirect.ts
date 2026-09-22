@@ -2,6 +2,7 @@ import { MathUtils, Vector3 } from 'three'
 import type { SourceOrientation, SourceProjection } from './types'
 
 const TWO_PI = Math.PI * 2
+const HALF_PI = Math.PI / 2
 /** Accept 1:1 and 2:1 with a little encoder / crop slack. */
 const ASPECT_TOLERANCE = 0.05
 
@@ -52,6 +53,51 @@ function applyOrientation(
 }
 
 /**
+ * Elevation of a dome direction relative to the configured source horizon, in
+ * radians. Negative below the horizon, zero on it.
+ */
+export function horizonElevationOffset(
+  direction: Vector3,
+  horizonLift = 0,
+): number {
+  const normal = direction.clone().normalize()
+  const elevation = Math.asin(MathUtils.clamp(normal.z, -1, 1))
+  return elevation - MathUtils.degToRad(horizonLift)
+}
+
+/**
+ * True when a dome direction lies on or above the configured source horizon.
+ */
+export function isDirectionAboveHorizon(
+  direction: Vector3,
+  horizonLift = 0,
+): boolean {
+  return horizonElevationOffset(direction, horizonLift) + 1e-7 >= 0
+}
+
+/**
+ * Expands the source hemisphere over the dome cap above the lifted horizon.
+ * Azimuth and zenith stay fixed; only elevation is remapped.
+ */
+function remapForHorizon(direction: Vector3, horizonLift: number): Vector3 {
+  const normal = direction.clone().normalize()
+  const elevation = Math.asin(MathUtils.clamp(normal.z, -1, 1))
+  const lift = MathUtils.clamp(MathUtils.degToRad(horizonLift), 0, HALF_PI - 1e-4)
+  const sourceElevation =
+    MathUtils.clamp((elevation - lift) / (HALF_PI - lift), 0, 1) * HALF_PI
+  const horizontalLength = Math.hypot(normal.x, normal.y)
+
+  if (horizontalLength < 1e-7) return new Vector3(0, 0, 1)
+
+  const sourceHorizontal = Math.cos(sourceElevation)
+  return new Vector3(
+    (normal.x / horizontalLength) * sourceHorizontal,
+    (normal.y / horizontalLength) * sourceHorizontal,
+    Math.sin(sourceElevation),
+  )
+}
+
+/**
  * Infers source layout from pixel aspect. `1:1` → hemispherical fisheye,
  * `2:1` → equirectangular; anything else is rejected.
  */
@@ -81,8 +127,9 @@ export function warpMeshTypeForProjection(projection: SourceProjection): number 
 export function directionToEquirectUV(
   direction: Vector3,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
+  horizonLift = 0,
 ): { u: number; v: number } {
-  const rotated = applyOrientation(direction, orientation)
+  const rotated = applyOrientation(remapForHorizon(direction, horizonLift), orientation)
   const longitude = Math.atan2(rotated.x, rotated.y)
   const latitude = Math.asin(MathUtils.clamp(rotated.z, -1, 1))
   const u = MathUtils.euclideanModulo(0.5 - longitude / TWO_PI, 1)
@@ -99,8 +146,9 @@ export function directionToEquirectUV(
 export function directionToFisheyeUV(
   direction: Vector3,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
+  horizonLift = 0,
 ): { u: number; v: number } {
-  const rotated = applyOrientation(direction, orientation)
+  const rotated = applyOrientation(remapForHorizon(direction, horizonLift), orientation)
   const azimuth = Math.atan2(rotated.x, rotated.y)
   const polar = Math.acos(MathUtils.clamp(rotated.z, -1, 1))
   // polar = π/2 (horizon) → radius 0.5 (mid-edge of the square).
@@ -116,10 +164,11 @@ export function directionToSourceUV(
   direction: Vector3,
   projection: SourceProjection,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
+  horizonLift = 0,
 ): { u: number; v: number } {
   return projection === 'fisheye'
-    ? directionToFisheyeUV(direction, orientation)
-    : directionToEquirectUV(direction, orientation)
+    ? directionToFisheyeUV(direction, orientation, horizonLift)
+    : directionToEquirectUV(direction, orientation, horizonLift)
 }
 
 export function formatMeshNumber(value: number): string {

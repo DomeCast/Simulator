@@ -11,6 +11,7 @@ import type { DisplayOptions, SimulationParameters } from './types'
 const parameters: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
+  horizonLift: 0,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,

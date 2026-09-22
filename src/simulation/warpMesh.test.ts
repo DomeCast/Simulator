@@ -5,6 +5,7 @@ import {
   directionToEquirectUV,
   directionToFisheyeUV,
   formatMeshNumber,
+  isDirectionAboveHorizon,
   warpMeshTypeForProjection,
 } from './equirect'
 import {
@@ -27,6 +28,7 @@ import type { SimulationParameters } from './types'
 const parameters: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
+  horizonLift: 0,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -90,6 +92,43 @@ describe('equirectangular mapping', () => {
 
     expect(domeRight.u).toBeCloseTo(0.75)
     expect(domeLeft.u).toBeCloseTo(0.25)
+  })
+})
+
+describe('lifted source horizon', () => {
+  const atElevation = (degrees: number) => {
+    const radians = (degrees * Math.PI) / 180
+    return new Vector3(0, Math.cos(radians), Math.sin(radians))
+  }
+
+  it('maps the configured elevation to the source horizon', () => {
+    const uv = directionToEquirectUV(
+      atElevation(30),
+      { yaw: 0, pitch: 0, roll: 0 },
+      30,
+    )
+    expect(uv.u).toBeCloseTo(0.5)
+    expect(uv.v).toBeCloseTo(0.5)
+  })
+
+  it('stretches the remaining dome cap while keeping the zenith fixed', () => {
+    const midpoint = directionToEquirectUV(
+      atElevation(60),
+      { yaw: 0, pitch: 0, roll: 0 },
+      30,
+    )
+    const zenith = directionToEquirectUV(
+      atElevation(90),
+      { yaw: 0, pitch: 0, roll: 0 },
+      30,
+    )
+    expect(midpoint.v).toBeCloseTo(0.75)
+    expect(zenith.v).toBeCloseTo(1)
+  })
+
+  it('identifies dome directions below the lifted horizon', () => {
+    expect(isDirectionAboveHorizon(atElevation(29), 30)).toBe(false)
+    expect(isDirectionAboveHorizon(atElevation(30), 30)).toBe(true)
   })
 })
 
@@ -176,6 +215,15 @@ describe('warp mesh export', () => {
     const mesh = buildWarpMesh(parameters, { sourceProjection: 'fisheye' })
     expect(mesh.type).toBe(2)
     expect(serializeWarpMesh(mesh).split('\n')[0]).toBe('2')
+  })
+
+  it('excludes projector nodes below a lifted source horizon', () => {
+    const baseline = buildWarpMesh(parameters)
+    const lifted = buildWarpMesh({ ...parameters, horizonLift: 30 })
+    const baselineMapped = baseline.nodes.filter((node) => node.intensity >= 0)
+    const liftedMapped = lifted.nodes.filter((node) => node.intensity >= 0)
+
+    expect(liftedMapped.length).toBeLessThan(baselineMapped.length)
   })
 
   it('emits a regular projector grid in row-major order', () => {

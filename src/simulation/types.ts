@@ -17,6 +17,8 @@ export interface SimulationParameters {
   domeDiameter: number
   /** Vertical cylindrical wall under the hemisphere, in meters (`0` = floor-seated). */
   springlineHeight: number
+  /** Source horizon elevation above the dome rim, in degrees. */
+  horizonLift: number
   /** Inner dome and springline wall colour, as `#rrggbb`. */
   domeInteriorColor: string
   mirrorDiameter: number

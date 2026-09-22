@@ -381,6 +381,27 @@ h1 span {
   color: #889aad;
 }
 
+.gui-mount .lil-gui .lil-controller.lil-function.action-row {
+  margin-top: 8px;
+}
+
+.gui-mount .lil-gui .lil-controller.lil-function button {
+  height: 31px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: #9eb3c4;
+  background: #0c141e;
+  font: 600 10px 'DM Mono', monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: 160ms ease;
+}
+
+.gui-mount .lil-gui .lil-controller.lil-function button:hover {
+  color: var(--cyan);
+  border-color: rgba(88, 230, 194, 0.35);
+}
+
 .gui-mount .lil-gui .lil-controller.lil-boolean .lil-widget {
   justify-content: flex-end;
 }

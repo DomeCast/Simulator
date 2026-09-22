@@ -35,7 +35,10 @@ import {
   WebGLRenderer,
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { directionToSourceUV } from '../simulation/equirect'
+import {
+  directionToSourceUV,
+  horizonElevationOffset,
+} from '../simulation/equirect'
 import { createSourceTexture } from './sourceTexture'
 import {
   getDomeCenter,
@@ -935,7 +938,9 @@ export class PlanetariumScene {
   ): void {
     const columnSpan = gridBounds.maxColumn - gridBounds.minColumn
     const rowSpan = gridBounds.maxRow - gridBounds.minRow
-    const maxVertices = Math.max(0, columnSpan * rowSpan * 6)
+    // Horizon clipping can split each triangle into two, so budget twice the
+    // unclipped vertex count.
+    const maxVertices = Math.max(0, columnSpan * rowSpan * 12)
     this.projectedPositions = this.ensureCapacity(
       this.projectedImage,
       this.projectedPositions,
@@ -953,7 +958,8 @@ export class PlanetariumScene {
 
     const lookup = new Map(rays.map((ray) => [`${ray.column}:${ray.row}`, ray]))
     const domeCenter = getDomeCenter(params)
-    const shrink = 1 - 0.008 / getDomeRadius(params)
+    const domeRadius = getDomeRadius(params)
+    const shrink = 1 - 0.008 / domeRadius
     const positions = this.projectedPositions
     const uvs = this.projectedUvs
     let vertexOffset = 0
@@ -962,7 +968,19 @@ export class PlanetariumScene {
     const sample = (ray: TracedRay | undefined) => {
       if (!isMeshUsableRay(ray, includeOccluded)) return null
       const direction = ray.domeHit.clone().sub(domeCenter)
-      const uv = directionToSourceUV(direction, sourceProjection, orientation)
+      return {
+        direction,
+        elevation: horizonElevationOffset(direction, params.horizonLift),
+      }
+    }
+
+    const toVertex = (direction: Vector3) => {
+      const uv = directionToSourceUV(
+        direction,
+        sourceProjection,
+        orientation,
+        params.horizonLift,
+      )
       const inset = domeCenter.clone().addScaledVector(direction, shrink)
       return {
         x: inset.x,
@@ -971,6 +989,51 @@ export class PlanetariumScene {
         u: uv.u,
         v: uv.v,
       }
+    }
+
+    type Corner = NonNullable<ReturnType<typeof sample>>
+
+    /**
+     * Walks the edge to the exact horizon crossing. Bisection keeps the cut on
+     * the horizon itself, so the boundary slides smoothly as the lift changes
+     * rather than snapping to whole preview cells.
+     */
+    const crossHorizon = (inside: Corner, outside: Corner): Vector3 => {
+      let low = 0
+      let high = 1
+      let crossing = inside.direction
+      for (let step = 0; step < 12; step += 1) {
+        const middle = (low + high) / 2
+        crossing = inside.direction
+          .clone()
+          .lerp(outside.direction, middle)
+          .setLength(domeRadius)
+        if (horizonElevationOffset(crossing, params.horizonLift) >= 0) {
+          low = middle
+        } else {
+          high = middle
+        }
+      }
+      return crossing
+    }
+
+    /** Sutherland–Hodgman clip of one triangle against the horizon plane. */
+    const clipToHorizon = (triangle: Corner[]) => {
+      const clipped: ReturnType<typeof toVertex>[] = []
+      for (let index = 0; index < triangle.length; index += 1) {
+        const current = triangle[index]
+        const previous = triangle[(index + triangle.length - 1) % triangle.length]
+        const currentInside = current.elevation >= 0
+        const previousInside = previous.elevation >= 0
+
+        if (currentInside !== previousInside) {
+          const inside = previousInside ? previous : current
+          const outside = previousInside ? current : previous
+          clipped.push(toVertex(crossHorizon(inside, outside)))
+        }
+        if (currentInside) clipped.push(toVertex(current.direction))
+      }
+      return clipped
     }
 
     const unwrapSeam = (
@@ -994,9 +1057,9 @@ export class PlanetariumScene {
     }
 
     const pushTriangle = (
-      a: NonNullable<ReturnType<typeof sample>>,
-      b: NonNullable<ReturnType<typeof sample>>,
-      c: NonNullable<ReturnType<typeof sample>>,
+      a: ReturnType<typeof toVertex>,
+      b: ReturnType<typeof toVertex>,
+      c: ReturnType<typeof toVertex>,
     ) => {
       const seam = unwrapSeam(a, b, c)
       for (const point of [a, b, c]) {
@@ -1012,6 +1075,14 @@ export class PlanetariumScene {
       }
     }
 
+    const emit = (triangle: Corner[]) => {
+      if (triangle.every((corner) => corner.elevation < 0)) return
+      const clipped = clipToHorizon(triangle)
+      for (let index = 2; index < clipped.length; index += 1) {
+        pushTriangle(clipped[0], clipped[index - 1], clipped[index])
+      }
+    }
+
     for (let row = gridBounds.minRow; row < gridBounds.maxRow; row += 1) {
       for (let column = gridBounds.minColumn; column < gridBounds.maxColumn; column += 1) {
         const topLeft = sample(lookup.get(`${column}:${row}`))
@@ -1020,10 +1091,10 @@ export class PlanetariumScene {
         const bottomRight = sample(lookup.get(`${column + 1}:${row + 1}`))
 
         if (topLeft && topRight && bottomRight) {
-          pushTriangle(topLeft, topRight, bottomRight)
+          emit([topLeft, topRight, bottomRight])
         }
         if (topLeft && bottomRight && bottomLeft) {
-          pushTriangle(topLeft, bottomRight, bottomLeft)
+          emit([topLeft, bottomRight, bottomLeft])
         }
       }
     }

@@ -5,6 +5,7 @@ import type { DisplayOptions, SimulationParameters } from './types'
 const parameters: SimulationParameters = {
   domeDiameter: 12,
   springlineHeight: 0.4,
+  horizonLift: 20,
   domeInteriorColor: '#c4bfb6',
   mirrorDiameter: 1.6,
   mirrorHeight: 0.4,
@@ -41,6 +42,7 @@ describe('saved profiles', () => {
     expect(listed[0].id).toBe(saved.id)
     expect(store.load(saved.id)?.parameters.domeDiameter).toBe(12)
     expect(store.load(saved.id)?.parameters.springlineHeight).toBe(0.4)
+    expect(store.load(saved.id)?.parameters.horizonLift).toBe(20)
     expect(store.load(saved.id)?.parameters.domeInteriorColor).toBe('#c4bfb6')
     expect(store.load(saved.id)?.parameters.mirrorPitch).toBe(12)
     expect(store.load(saved.id)?.parameters.lensShiftHorizontal).toBe(0)
@@ -106,6 +108,7 @@ describe('saved profiles', () => {
     const loaded = store.load('abc')
     expect(loaded?.parameters.domeDiameter).toBe(14)
     expect(loaded?.parameters.mirrorDiameter).toBe(1.3)
+    expect(loaded?.parameters.horizonLift).toBe(0)
     expect(loaded?.parameters.domeInteriorColor).toBe('#11053b')
     expect(loaded?.parameters.aspectRatio).toBe('16:9')
     expect(loaded?.display.showRays).toBe(false)
@@ -193,6 +196,7 @@ describe('saved profiles', () => {
     expect(loaded?.parameters.domeDiameter).toBe(10)
     expect(loaded?.parameters.mirrorDiameter).toBeCloseTo(1.3)
     expect(loaded?.parameters.springlineHeight).toBe(0)
+    expect(loaded?.parameters.horizonLift).toBe(0)
     expect(loaded?.parameters.domeInteriorColor).toBe('#11053b')
     expect(storage.getItem('domecast.profiles.v3')).toBeTruthy()
     expect(storage.getItem('domecast.profiles.v1')).toBeNull()

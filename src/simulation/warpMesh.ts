@@ -2,6 +2,7 @@ import { aspectRatioValue, getDomeCenter, traceProjection } from './rayTracer'
 import {
   directionToSourceUV,
   formatMeshNumber,
+  isDirectionAboveHorizon,
   warpMeshTypeForProjection,
 } from './equirect'
 import type {
@@ -243,7 +244,16 @@ export function buildWarpMesh(
     gridColumns: sourceColumns,
     gridRows: sourceRows,
   })
-  const usableBounds = getExportGridBounds(result.rays, includeOccluded)
+  const domeCenter = getDomeCenter(params)
+  const sourceRays = result.rays.filter(
+    (ray) =>
+      isMeshUsableRay(ray, includeOccluded)
+      && isDirectionAboveHorizon(
+        ray.domeHit.clone().sub(domeCenter),
+        params.horizonLift,
+      ),
+  )
+  const usableBounds = getExportGridBounds(sourceRays, includeOccluded)
   if (!usableBounds) {
     return {
       type: meshType,
@@ -264,6 +274,14 @@ export function buildWarpMesh(
   let maxPathLength = 0
   for (const ray of result.rays) {
     if (!isMeshUsableRay(ray, includeOccluded)) continue
+    if (
+      !isDirectionAboveHorizon(
+        ray.domeHit.clone().sub(domeCenter),
+        params.horizonLift,
+      )
+    ) {
+      continue
+    }
     if (
       ray.column < bounds.minColumn
       || ray.column > bounds.maxColumn
@@ -292,11 +310,18 @@ export function buildWarpMesh(
       )
       const ray = byGrid.get(`${rayColumn}:${rayRow}`)
 
-      if (isMeshUsableRay(ray, includeOccluded)) {
+      if (
+        isMeshUsableRay(ray, includeOccluded)
+        && isDirectionAboveHorizon(
+          ray.domeHit.clone().sub(domeCenter),
+          params.horizonLift,
+        )
+      ) {
         const uv = directionToSourceUV(
-          ray.domeHit.clone().sub(getDomeCenter(params)),
+          ray.domeHit.clone().sub(domeCenter),
           sourceProjection,
           orientation,
+          params.horizonLift,
         )
         nodes.push({
           x,

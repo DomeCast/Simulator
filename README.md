@@ -34,6 +34,7 @@ Pushes to `main` run tests, build the site, and deploy it to GitHub Pages automa
 - Spherical-triangle footprint area calculation for dome coverage
 - Beam clearance measurement that keeps the projector chassis out of the light path
 - Local fulldome source preview (1:1 fisheye or 2:1 equirectangular) with yaw, pitch, and roll
+- Adjustable source-horizon lift for domes whose projector cannot reach the rim
 - Source preview shows only the projector’s lit footprint (FOV, pitch, lens shift, and coverage), not the whole sky
 - Downloadable Paul Bourke warp mesh (`.data`) generated from the current optical setup
 - Named setups saved in the browser, listed for reload, and deletable when finished with
@@ -48,7 +49,7 @@ Choose a source image under **Dome source image**. Aspect ratio selects the layo
 
 Any other aspect ratio is rejected. The image is held only for the current session through an object URL; named setups store geometry, display toggles, and orientation, but not the image file itself. Re-select the image after loading a saved setup.
 
-With **Source preview** enabled, the source is drawn only where valid projector rays hit the dome after reflecting from the mirror. Changing FOV, pitch, lens shift, or throw reshapes that footprint so you see what the projector would put on the sky — not the full hemisphere. **Source orientation** yaw/pitch/roll turn the image within that footprint. For equirectangular sources, the horizontal centre of the panorama faces the dome front (`+Y`). The top half of the image covers the hemisphere: the top edge is zenith and the middle row is the horizon. For fisheye sources, the dome front maps toward the bottom of the frame.
+With **Source preview** enabled, the source is drawn only where valid projector rays hit the dome after reflecting from the mirror. Changing FOV, pitch, lens shift, or throw reshapes that footprint so you see what the projector would put on the sky — not the full hemisphere. **Horizon lift** moves the source horizon uniformly above the rim and stretches the source over the remaining dome cap; preview and warp-mesh points below it are excluded. **Source orientation** yaw/pitch/roll turn the image within that footprint. For equirectangular sources, the horizontal centre of the panorama faces the dome front (`+Y`). The top half of the image covers the hemisphere: the top edge is zenith and the middle row is the horizon. For fisheye sources, the dome front maps toward the bottom of the frame.
 
 **Download warp mesh** exports a Paul Bourke rectangular mesh in the same style as `standard_16x9.data.txt`:
 
@@ -81,4 +82,4 @@ Copyright (C) 2026 Robert Bilsland
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE) (copyleft). You may use, modify, and share it under those terms.
 
-If you want to use this software for commercial purposes outside the scope of GPLv3 — for example in a closed-source or proprietary product — contact Robert Bilsland at [RCBilsland@GMail.com](mailto:RCBilsland@GMail.com) to arrange a commercial licence.
+If you want to use this software for commercial purposes outside the scope of GPLv3 — for example in a closed-source or proprietary product — contact me to arrange a commercial licence.

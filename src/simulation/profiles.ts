@@ -41,6 +41,7 @@ const ASPECT_RATIOS: AspectRatio[] = ['16:9', '16:10', '4:3']
 const DEFAULT_PARAMETERS: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
+  horizonLift: 0,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -173,6 +174,10 @@ export function sanitizeParameters(
     springlineHeight: Math.min(
       3,
       Math.max(0, finite(source.springlineHeight, DEFAULT_PARAMETERS.springlineHeight)),
+    ),
+    horizonLift: Math.min(
+      60,
+      Math.max(0, finite(source.horizonLift, DEFAULT_PARAMETERS.horizonLift)),
     ),
     domeInteriorColor: hexColor(
       source.domeInteriorColor,
