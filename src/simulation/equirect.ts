@@ -1,7 +1,6 @@
 import { MathUtils, Vector3 } from 'three'
 import type { SourceOrientation, SourceProjection } from './types'
 
-const TWO_PI = Math.PI * 2
 const HALF_PI = Math.PI / 2
 /** Accept 1:1 and 2:1 with a little encoder / crop slack. */
 const ASPECT_TOLERANCE = 0.05
