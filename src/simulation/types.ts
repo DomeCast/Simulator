@@ -28,6 +28,8 @@ export interface SimulationParameters {
   sourceFov: number
   /** Inner dome and springline wall colour, as `#rrggbb`. */
   domeInteriorColor: string
+  /** Fill where a dome direction has no source sample (outside the image), as `#rrggbb`. */
+  noSourceColor: string
   mirrorDiameter: number
   mirrorHeight: number
   /** Mirror pitch-down angle in degrees (`0` = upright). */

@@ -14,6 +14,7 @@ const parameters: SimulationParameters = {
   horizonLift: 0,
   sourceFov: 90,
   domeInteriorColor: '#11053b',
+  noSourceColor: '#000000',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
   mirrorPitch: 0,

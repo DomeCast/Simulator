@@ -32,6 +32,7 @@ const params: SimulationParameters = {
   horizonLift: 0,
   sourceFov: 90,
   domeInteriorColor: '#11053b',
+  noSourceColor: '#000000',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
   mirrorPitch: 0,
@@ -368,6 +369,7 @@ bind(geometryFolder.add(params, 'springlineHeight', 0, 3, 0.05).name('Dome wall 
 bind(geometryFolder.add(params, 'horizonLift', 0, 60, 0.1).name('Horizon lift · °'))
 bind(geometryFolder.add(params, 'sourceFov', 1, 180, 0.5).name('Source FOV · °'))
 bind(geometryFolder.addColor(params, 'domeInteriorColor').name('Inner colour'))
+bind(geometryFolder.addColor(params, 'noSourceColor').name('No-source colour'))
 const mirrorDiameterController = bind(
   geometryFolder.add(params, 'mirrorDiameter', 0.4, 3, 0.02).name('Mirror diameter · m'),
 )
@@ -446,16 +448,6 @@ const setOrientationControls = (
   resetOrientationController.enable()
 
   yawController.enable()
-  if (mode === 'fisheye') {
-    orientation.pitch = 0
-    orientation.roll = 0
-    pitchController.updateDisplay()
-    rollController.updateDisplay()
-    pitchController.disable()
-    rollController.disable()
-    return
-  }
-
   pitchController.enable()
   rollController.enable()
 }

@@ -31,6 +31,7 @@ const parameters: SimulationParameters = {
   horizonLift: 0,
   sourceFov: 90,
   domeInteriorColor: '#11053b',
+  noSourceColor: '#000000',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
   mirrorPitch: 0,
@@ -211,6 +212,22 @@ describe('fisheye mapping', () => {
 
     expect(domeRight.u).toBeCloseTo(1)
     expect(domeLeft.u).toBeCloseTo(0)
+  })
+
+  it('allows pitch and can leave the source image frame', () => {
+    const pitched = directionToFisheyeUV(new Vector3(0, 1, 0), {
+      yaw: 0,
+      pitch: 45,
+      roll: 0,
+    })
+    const upright = directionToFisheyeUV(new Vector3(0, 1, 0))
+    expect(pitched.v).not.toBeCloseTo(upright.v)
+    const far = directionToFisheyeUV(new Vector3(0, 1, 0), {
+      yaw: 0,
+      pitch: 90,
+      roll: 0,
+    })
+    expect(far.u < 0 || far.u > 1 || far.v < 0 || far.v > 1).toBe(true)
   })
 })
 

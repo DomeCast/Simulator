@@ -130,6 +130,7 @@ export class PlanetariumScene {
 
   private sourceTexture: Texture | null = null
   private sourceProjection: SourceProjection | null = null
+  private noSourceColorUniform: { value: Color } | null = null
   private animationFrame = 0
   private contextLossCount = 0
   private viewMode: ViewMode = 'fly'
@@ -184,6 +185,30 @@ export class PlanetariumScene {
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
     })
+    // Outside the source image (e.g. fisheye pitched past the frame) → fill
+    // with the configured no-source colour instead of ClampToEdge smear.
+    this.projectedImageMaterial.onBeforeCompile = (shader) => {
+      shader.uniforms.uNoSourceColor = { value: new Color(0x000000) }
+      this.noSourceColorUniform = shader.uniforms.uNoSourceColor
+      shader.fragmentShader = shader.fragmentShader.replace(
+        'void main() {',
+        'uniform vec3 uNoSourceColor;\nvoid main() {',
+      )
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+#ifdef USE_MAP
+  if (vMapUv.x < 0.0 || vMapUv.x > 1.0 || vMapUv.y < 0.0 || vMapUv.y > 1.0) {
+    diffuseColor = vec4(uNoSourceColor, opacity);
+  } else {
+    vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+    diffuseColor *= sampledDiffuseColor;
+  }
+#endif
+`,
+      )
+    }
+    this.projectedImageMaterial.customProgramCacheKey = () => 'source-uv-nosource-color'
 
     const dome = this.createDome()
     this.domeShell = dome.shell
@@ -245,6 +270,7 @@ export class PlanetariumScene {
     this.domeDefaultMaterial.color.set(params.domeInteriorColor)
     this.domeShell.material = this.domeDefaultMaterial
     this.domeSpringline.material = this.domeDefaultMaterial
+    this.noSourceColorUniform?.value.set(params.noSourceColor)
 
     const showSpringline = springline > 1e-4
     this.domeSpringline.visible = showSpringline

@@ -45,6 +45,7 @@ Stay on the **Rig** tab. Units are metres.
 2. If the hemisphere sits on a short vertical wall, raise **Dome wall**. `0` puts the equator on the floor.
 3. Raise **Horizon lift** if the projector cannot reach the dome rim. The source horizon moves uniformly up the dome by that angle, the image stretches over the remaining cap, and the area below it is excluded from previews and warp meshes.
 4. **Inner colour** paints the inside of the dome and that wall. With no source image loaded, this is what you see looking in. A loaded image is drawn on top of it, only where the projector actually lights the surface.
+5. **No-source colour** fills any part of that footprint where the source UV falls outside the image (for example after pitching a fisheye past the frame). Default is black.
 5. Set **Mirror diameter** and **Mirror height**. The mirror stays in contact with the rear of the shell: as you raise it, it slides forward along the curve. Below the equator it sits against the cylindrical wall instead.
 6. **Mirror pitch down** tilts the optical face toward the floor (`0` is upright).
 

@@ -8,6 +8,7 @@ const parameters: SimulationParameters = {
   horizonLift: 20,
   sourceFov: 90,
   domeInteriorColor: '#c4bfb6',
+  noSourceColor: '#000000',
   mirrorDiameter: 1.6,
   mirrorHeight: 0.4,
   mirrorPitch: 12,
@@ -62,6 +63,8 @@ describe('saved profiles', () => {
       '#11053b',
     )
     expect(sanitizeParameters({}).domeInteriorColor).toBe('#11053b')
+    expect(sanitizeParameters({}).noSourceColor).toBe('#000000')
+    expect(sanitizeParameters({ noSourceColor: '#ABC' }).noSourceColor).toBe('#aabbcc')
   })
 
   it('overwrites a profile of the same name', () => {

@@ -44,6 +44,7 @@ const DEFAULT_PARAMETERS: SimulationParameters = {
   horizonLift: 0,
   sourceFov: 90,
   domeInteriorColor: '#11053b',
+  noSourceColor: '#000000',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
   mirrorPitch: 0,
@@ -187,6 +188,10 @@ export function sanitizeParameters(
     domeInteriorColor: hexColor(
       source.domeInteriorColor,
       DEFAULT_PARAMETERS.domeInteriorColor,
+    ),
+    noSourceColor: hexColor(
+      source.noSourceColor,
+      DEFAULT_PARAMETERS.noSourceColor,
     ),
     mirrorDiameter,
     mirrorHeight: finite(source.mirrorHeight, DEFAULT_PARAMETERS.mirrorHeight),
