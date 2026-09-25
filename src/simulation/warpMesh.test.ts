@@ -29,7 +29,7 @@ const parameters: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
   horizonLift: 0,
-  sourceFov: 360,
+  sourceFov: 90,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -134,21 +134,37 @@ describe('lifted source horizon', () => {
 })
 
 describe('source field of view', () => {
-  it('keeps full equirect width at 360°', () => {
-    const right = directionToEquirectUV(new Vector3(1, 0, 0), undefined, 0, 360)
-    expect(right.u).toBeCloseTo(0.75)
+  const atElevation = (degrees: number) => {
+    const radians = (degrees * Math.PI) / 180
+    return new Vector3(0, Math.cos(radians), Math.sin(radians))
+  }
+
+  it('keeps zenith-to-horizon mapping at 90°', () => {
+    const horizon = directionToEquirectUV(atElevation(0), undefined, 0, 90)
+    const zenith = directionToEquirectUV(atElevation(90), undefined, 0, 90)
+    expect(horizon.v).toBeCloseTo(0.5)
+    expect(zenith.v).toBeCloseTo(1)
   })
 
-  it('stretches a 180° equirect crop across the full dome azimuth', () => {
-    const right = directionToEquirectUV(new Vector3(1, 0, 0), undefined, 0, 180)
-    // Dome +X (90°) maps to the right edge of a 180° source.
-    expect(right.u).toBeCloseTo(0)
+  it('stretches an 80° zenith cap to the dome rim for equirect', () => {
+    const domeHorizon = directionToEquirectUV(atElevation(0), undefined, 0, 80)
+    // Dome rim samples source at 80° from zenith → elevation 10° → v ≈ 0.5 + 10/180.
+    expect(domeHorizon.v).toBeCloseTo(0.5 + 10 / 180)
   })
 
-  it('zooms fisheye in when source FOV is narrower than 180°', () => {
-    const horizon = directionToFisheyeUV(new Vector3(0, 1, 0), undefined, 0, 90)
-    // polar π/2 with FOV π/2 → radius 1 (outside the mid-edge circle).
-    expect(horizon.v).toBeCloseTo(-0.5)
+  it('squeezes equirect content past 90° into the dome', () => {
+    const domeHorizon = directionToEquirectUV(atElevation(0), undefined, 0, 120)
+    // Dome rim samples source at 120° from zenith → elevation −30° → v ≈ 0.5 − 30/180.
+    expect(domeHorizon.v).toBeCloseTo(0.5 - 30 / 180)
+  })
+
+  it('stretches an 80° zenith cap to the dome rim for fisheye', () => {
+    const domeHorizon = directionToFisheyeUV(new Vector3(0, 1, 0), undefined, 0, 80)
+    const full = directionToFisheyeUV(new Vector3(0, 1, 0), undefined, 0, 90)
+    // Smaller source span → smaller image radius at the dome rim (inside the circle).
+    expect(Math.hypot(domeHorizon.u - 0.5, domeHorizon.v - 0.5)).toBeLessThan(
+      Math.hypot(full.u - 0.5, full.v - 0.5),
+    )
   })
 })
 

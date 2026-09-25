@@ -20,8 +20,10 @@ export interface SimulationParameters {
   /** Source horizon elevation above the dome rim, in degrees. */
   horizonLift: number
   /**
-   * Angular width of the source content projected onto the dome, in degrees.
-   * Fisheye is clamped to 180°; equirectangular may be up to 360°.
+   * Angular span from zenith of source content stretched across the full dome
+   * hemisphere, in degrees. `90` maps zenith→horizon 1:1; smaller values stretch
+   * a zenith cap to the rim; equirectangular may exceed `90` to squeeze content
+   * from below the geometric horizon into the dome.
    */
   sourceFov: number
   /** Inner dome and springline wall colour, as `#rrggbb`. */

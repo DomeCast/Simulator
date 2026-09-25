@@ -30,7 +30,7 @@ const params: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
   horizonLift: 0,
-  sourceFov: 360,
+  sourceFov: 90,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -366,7 +366,7 @@ const geometryFolder = rigGui.addFolder('Environment')
 bind(geometryFolder.add(params, 'domeDiameter', 5, 20, 0.1).name('Dome diameter · m'))
 bind(geometryFolder.add(params, 'springlineHeight', 0, 3, 0.05).name('Dome wall · m'))
 bind(geometryFolder.add(params, 'horizonLift', 0, 60, 0.1).name('Horizon lift · °'))
-bind(geometryFolder.add(params, 'sourceFov', 1, 360, 0.5).name('Source FOV · °'))
+bind(geometryFolder.add(params, 'sourceFov', 1, 180, 0.5).name('Source FOV · °'))
 bind(geometryFolder.addColor(params, 'domeInteriorColor').name('Inner colour'))
 const mirrorDiameterController = bind(
   geometryFolder.add(params, 'mirrorDiameter', 0.4, 3, 0.02).name('Mirror diameter · m'),

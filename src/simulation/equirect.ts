@@ -1,6 +1,7 @@
 import { MathUtils, Vector3 } from 'three'
 import type { SourceOrientation, SourceProjection } from './types'
 
+const TWO_PI = Math.PI * 2
 const HALF_PI = Math.PI / 2
 /** Accept 1:1 and 2:1 with a little encoder / crop slack. */
 const ASPECT_TOLERANCE = 0.05
@@ -97,17 +98,31 @@ function remapForHorizon(direction: Vector3, horizonLift: number): Vector3 {
 }
 
 /**
- * Clamps source FOV for the active projection: fisheye ≤ 180°, equirect ≤ 360°.
- * Default full coverage is 360° (equirect full width); fisheye uses at most 180°.
+ * Angular span from zenith of source content that is stretched across the full
+ * dome hemisphere (0–90°). Default `90` keeps a 1:1 zenith→horizon mapping.
+ * Fisheye masters stop at the horizon (`≤ 90°`); equirectangular can include
+ * content below the geometric horizon (`≤ 180°`) and squeeze it into the dome.
  */
 export function effectiveSourceFovDegrees(
   sourceFov: number,
   projection: SourceProjection,
 ): number {
-  const max = projection === 'fisheye' ? 180 : 360
-  const fallback = projection === 'fisheye' ? 180 : 360
-  const value = Number.isFinite(sourceFov) ? sourceFov : fallback
+  const max = projection === 'fisheye' ? 90 : 180
+  const value = Number.isFinite(sourceFov) ? sourceFov : 90
   return MathUtils.clamp(value, 1, max)
+}
+
+/**
+ * Maps a dome polar angle (0 at zenith … π/2 at the rim) onto the configured
+ * source span from zenith. Values above 90° reach below the source horizon.
+ */
+function sourcePolarFromDomePolar(
+  domePolar: number,
+  sourceFovDegrees: number,
+  projection: SourceProjection,
+): number {
+  const span = MathUtils.degToRad(effectiveSourceFovDegrees(sourceFovDegrees, projection))
+  return domePolar * (span / HALF_PI)
 }
 
 /**
@@ -137,22 +152,27 @@ export function warpMeshTypeForProjection(projection: SourceProjection): number 
  * (`u = 0.5`) faces the dome front (`+Y`). The X-mirror in `applyOrientation`
  * is undone on U so left/right still read correctly after the convex mirror.
  *
- * `sourceFov` is the azimuthal width of the source content in degrees (1–360).
- * At 360° the full panorama width maps around the dome; smaller values stretch
- * a centred crop across the full azimuth.
+ * `sourceFov` is the zenith→content span in degrees (1–180). At 90° the dome
+ * horizon samples the image horizon; larger values squeeze content from below
+ * the geometric horizon into the dome, smaller values stretch a zenith cap.
  */
 export function directionToEquirectUV(
   direction: Vector3,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
   horizonLift = 0,
-  sourceFov = 360,
+  sourceFov = 90,
 ): { u: number; v: number } {
   const rotated = applyOrientation(remapForHorizon(direction, horizonLift), orientation)
   const longitude = Math.atan2(rotated.x, rotated.y)
-  const latitude = Math.asin(MathUtils.clamp(rotated.z, -1, 1))
-  const fov = MathUtils.degToRad(effectiveSourceFovDegrees(sourceFov, 'equirectangular'))
-  const u = MathUtils.euclideanModulo(0.5 - longitude / fov, 1)
-  const v = 0.5 + latitude / Math.PI
+  const domePolar = Math.acos(MathUtils.clamp(rotated.z, -1, 1))
+  const sourcePolar = sourcePolarFromDomePolar(
+    domePolar,
+    sourceFov,
+    'equirectangular',
+  )
+  const sourceElevation = HALF_PI - sourcePolar
+  const u = MathUtils.euclideanModulo(0.5 - longitude / TWO_PI, 1)
+  const v = 0.5 + sourceElevation / Math.PI
   return { u, v }
 }
 
@@ -162,21 +182,22 @@ export function directionToEquirectUV(
  * Dome front (`+Y`) samples the bottom of the frame, matching the usual
  * fulldome layout so a 180° yaw is not needed at load.
  *
- * `sourceFov` is the circular diameter of the source in degrees (1–180).
- * At 180° the dome horizon sits on the mid-edge circle; smaller values zoom in.
+ * `sourceFov` is the zenith→content span in degrees (1–90). At 90° the dome
+ * horizon sits on the mid-edge circle; smaller values stretch a zenith cap
+ * (e.g. 80°) down to the dome rim.
  */
 export function directionToFisheyeUV(
   direction: Vector3,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
   horizonLift = 0,
-  sourceFov = 180,
+  sourceFov = 90,
 ): { u: number; v: number } {
   const rotated = applyOrientation(remapForHorizon(direction, horizonLift), orientation)
   const azimuth = Math.atan2(rotated.x, rotated.y)
-  const polar = Math.acos(MathUtils.clamp(rotated.z, -1, 1))
-  const fov = MathUtils.degToRad(effectiveSourceFovDegrees(sourceFov, 'fisheye'))
-  // polar = fov/2 (configured horizon) → radius 0.5 (mid-edge of the square).
-  const radius = polar / fov
+  const domePolar = Math.acos(MathUtils.clamp(rotated.z, -1, 1))
+  const sourcePolar = sourcePolarFromDomePolar(domePolar, sourceFov, 'fisheye')
+  // 180° diameter image: source polar π/2 → radius 0.5 (mid-edge of the square).
+  const radius = sourcePolar / Math.PI
   const u = 0.5 - radius * Math.sin(azimuth)
   const v = 0.5 - radius * Math.cos(azimuth)
   return { u, v }
@@ -188,7 +209,7 @@ export function directionToSourceUV(
   projection: SourceProjection,
   orientation: SourceOrientation = { yaw: 0, pitch: 0, roll: 0 },
   horizonLift = 0,
-  sourceFov = 360,
+  sourceFov = 90,
 ): { u: number; v: number } {
   return projection === 'fisheye'
     ? directionToFisheyeUV(direction, orientation, horizonLift, sourceFov)
