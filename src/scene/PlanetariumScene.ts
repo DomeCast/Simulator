@@ -980,6 +980,7 @@ export class PlanetariumScene {
         sourceProjection,
         orientation,
         params.horizonLift,
+        params.sourceFov,
       )
       const inset = domeCenter.clone().addScaledVector(direction, shrink)
       return {

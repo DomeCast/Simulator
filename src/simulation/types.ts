@@ -19,6 +19,11 @@ export interface SimulationParameters {
   springlineHeight: number
   /** Source horizon elevation above the dome rim, in degrees. */
   horizonLift: number
+  /**
+   * Angular width of the source content projected onto the dome, in degrees.
+   * Fisheye is clamped to 180°; equirectangular may be up to 360°.
+   */
+  sourceFov: number
   /** Inner dome and springline wall colour, as `#rrggbb`. */
   domeInteriorColor: string
   mirrorDiameter: number

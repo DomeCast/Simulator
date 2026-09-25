@@ -29,6 +29,7 @@ const parameters: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
   horizonLift: 0,
+  sourceFov: 360,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -129,6 +130,25 @@ describe('lifted source horizon', () => {
   it('identifies dome directions below the lifted horizon', () => {
     expect(isDirectionAboveHorizon(atElevation(29), 30)).toBe(false)
     expect(isDirectionAboveHorizon(atElevation(30), 30)).toBe(true)
+  })
+})
+
+describe('source field of view', () => {
+  it('keeps full equirect width at 360°', () => {
+    const right = directionToEquirectUV(new Vector3(1, 0, 0), undefined, 0, 360)
+    expect(right.u).toBeCloseTo(0.75)
+  })
+
+  it('stretches a 180° equirect crop across the full dome azimuth', () => {
+    const right = directionToEquirectUV(new Vector3(1, 0, 0), undefined, 0, 180)
+    // Dome +X (90°) maps to the right edge of a 180° source.
+    expect(right.u).toBeCloseTo(0)
+  })
+
+  it('zooms fisheye in when source FOV is narrower than 180°', () => {
+    const horizon = directionToFisheyeUV(new Vector3(0, 1, 0), undefined, 0, 90)
+    // polar π/2 with FOV π/2 → radius 1 (outside the mid-edge circle).
+    expect(horizon.v).toBeCloseTo(-0.5)
   })
 })
 

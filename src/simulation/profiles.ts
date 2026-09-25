@@ -42,6 +42,7 @@ const DEFAULT_PARAMETERS: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
   horizonLift: 0,
+  sourceFov: 360,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -178,6 +179,10 @@ export function sanitizeParameters(
     horizonLift: Math.min(
       60,
       Math.max(0, finite(source.horizonLift, DEFAULT_PARAMETERS.horizonLift)),
+    ),
+    sourceFov: Math.min(
+      360,
+      Math.max(1, finite(source.sourceFov, DEFAULT_PARAMETERS.sourceFov)),
     ),
     domeInteriorColor: hexColor(
       source.domeInteriorColor,

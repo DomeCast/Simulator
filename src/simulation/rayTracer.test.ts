@@ -21,6 +21,7 @@ const defaults: SimulationParameters = {
   domeDiameter: 10,
   springlineHeight: 0,
   horizonLift: 0,
+  sourceFov: 360,
   domeInteriorColor: '#11053b',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,

@@ -322,6 +322,7 @@ export function buildWarpMesh(
           sourceProjection,
           orientation,
           params.horizonLift,
+          params.sourceFov,
         )
         nodes.push({
           x,
