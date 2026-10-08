@@ -26,8 +26,10 @@ export interface SimulationParameters {
    * from below the geometric horizon into the dome.
    */
   sourceFov: number
-  /** Inner dome and springline wall colour, as `#rrggbb`. */
+  /** Inner hemisphere colour, as `#rrggbb`. */
   domeInteriorColor: string
+  /** Cylindrical wall under the hemisphere, as `#rrggbb`. */
+  domeWallColor: string
   /** Fill where a dome direction has no source sample (outside the image), as `#rrggbb`. */
   noSourceColor: string
   mirrorDiameter: number

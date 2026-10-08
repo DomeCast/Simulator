@@ -32,6 +32,7 @@ const params: SimulationParameters = {
   horizonLift: 0,
   sourceFov: 90,
   domeInteriorColor: '#11053b',
+  domeWallColor: '#483f69',
   noSourceColor: '#000000',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -111,7 +112,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             aria-controls="panel-rig"
             data-panel="panel-rig"
           >
-            Rig
+            Setup
           </button>
           <button
             id="tab-source"
@@ -125,26 +126,15 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             Source
           </button>
           <button
-            id="tab-export"
+            id="tab-profiles"
             class="tab"
             type="button"
             role="tab"
             aria-selected="false"
-            aria-controls="panel-export"
-            data-panel="panel-export"
+            aria-controls="panel-profiles"
+            data-panel="panel-profiles"
           >
-            Export
-          </button>
-          <button
-            id="tab-setups"
-            class="tab"
-            type="button"
-            role="tab"
-            aria-selected="false"
-            aria-controls="panel-setups"
-            data-panel="panel-setups"
-          >
-            Setups
+            Profiles
           </button>
         </div>
 
@@ -182,53 +172,44 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           </div>
 
           <div
-            id="panel-export"
+            id="panel-profiles"
             class="tab-panel"
             role="tabpanel"
-            aria-labelledby="tab-export"
+            aria-labelledby="tab-profiles"
             hidden
           >
+            <section class="profiles" aria-label="Locally saved profiles">
+              <p class="eyebrow">Locally Saved Profiles</p>
+              <ul id="profile-list" class="profile-list"></ul>
+              <div class="profile-save-row">
+                <input
+                  id="profile-name"
+                  type="text"
+                  maxlength="80"
+                  placeholder="Name this profile"
+                  autocomplete="off"
+                />
+                <button id="profile-save" type="button">Save Locally</button>
+              </div>
+              <p id="profile-status" class="profile-status" role="status"></p>
+            </section>
+            <section class="panel-section" aria-label="Profile files">
+              <p class="eyebrow">Profile files</p>
+              <label class="mesh-download" for="import-setup">
+                Import Profile JSON
+                <input id="import-setup" type="file" accept="application/json,.json" hidden />
+              </label>
+              <button id="export-setup" type="button" class="mesh-download">
+                Export Profile JSON
+              </button>
+            </section>
             <section class="panel-section" aria-label="Export">
               <p class="eyebrow">Warp mesh</p>
               <button id="download-mesh" type="button" class="mesh-download">
                 Download warp mesh
               </button>
             </section>
-            <section class="panel-section" aria-label="Setup file">
-              <p class="eyebrow">Setup file</p>
-              <label class="mesh-download" for="import-setup">
-                Import setup JSON
-                <input id="import-setup" type="file" accept="application/json,.json" hidden />
-              </label>
-              <button id="export-setup" type="button" class="mesh-download">
-                Export setup JSON
-              </button>
-            </section>
             <p id="export-status" class="profile-status" role="status"></p>
-          </div>
-
-          <div
-            id="panel-setups"
-            class="tab-panel"
-            role="tabpanel"
-            aria-labelledby="tab-setups"
-            hidden
-          >
-            <section class="profiles" aria-label="Saved setups">
-              <p class="eyebrow">Saved setups</p>
-              <div class="profile-save-row">
-                <input
-                  id="profile-name"
-                  type="text"
-                  maxlength="80"
-                  placeholder="Name this setup"
-                  autocomplete="off"
-                />
-                <button id="profile-save" type="button">Save</button>
-              </div>
-              <p id="profile-status" class="profile-status" role="status"></p>
-              <ul id="profile-list" class="profile-list"></ul>
-            </section>
           </div>
         </div>
 
@@ -363,19 +344,16 @@ const bind = <T extends { onChange: (fn: () => void) => unknown }>(controller: T
   return controller
 }
 
-const geometryFolder = rigGui.addFolder('Environment')
-bind(geometryFolder.add(params, 'domeDiameter', 5, 20, 0.1).name('Dome diameter · m'))
-bind(geometryFolder.add(params, 'springlineHeight', 0, 3, 0.05).name('Dome wall · m'))
-bind(geometryFolder.add(params, 'horizonLift', 0, 60, 0.1).name('Horizon lift · °'))
-bind(geometryFolder.add(params, 'sourceFov', 1, 180, 0.5).name('Source FOV · °'))
-bind(geometryFolder.addColor(params, 'domeInteriorColor').name('Inner colour'))
-bind(geometryFolder.addColor(params, 'noSourceColor').name('No-source colour'))
-const mirrorDiameterController = bind(
-  geometryFolder.add(params, 'mirrorDiameter', 0.4, 3, 0.02).name('Mirror diameter · m'),
-)
-mirrorDiameterController.domElement.classList.add('group-start')
-bind(geometryFolder.add(params, 'mirrorHeight', 0, 3.5, 0.05).name('Mirror height · m'))
-bind(geometryFolder.add(params, 'mirrorPitch', 0, 60, 0.25).name('Mirror pitch down · °'))
+const geometryFolder = rigGui.addFolder('Dome')
+bind(geometryFolder.add(params, 'domeDiameter', 5, 20, 0.1).name('Diameter · m'))
+bind(geometryFolder.add(params, 'springlineHeight', 0, 3, 0.05).name('Wall height · m'))
+bind(geometryFolder.addColor(params, 'domeInteriorColor').name('Dome Colour'))
+bind(geometryFolder.addColor(params, 'domeWallColor').name('Wall Colour'))
+
+const mirrorFolder = rigGui.addFolder('Mirror')
+bind(mirrorFolder.add(params, 'mirrorDiameter', 0.4, 3, 0.02).name('Mirror diameter · m'))
+bind(mirrorFolder.add(params, 'mirrorHeight', 0, 3.5, 0.05).name('Mirror height · m'))
+bind(mirrorFolder.add(params, 'mirrorPitch', 0, 60, 0.25).name('Mirror pitch down · °'))
 
 const projectorFolder = rigGui.addFolder('Projector')
 bind(projectorFolder.add(params, 'aspectRatio', ['16:9', '16:10', '4:3']).name('Aspect ratio'))
@@ -407,7 +385,12 @@ bind(
   sourceGui.add(display, 'excludeOccludedFromMesh').name('Exclude occluded from mesh'),
 )
 
-const orientationFolder = sourceGui.addFolder('Source orientation')
+const sourceSetupFolder = sourceGui.addFolder('Setup')
+bind(sourceSetupFolder.add(params, 'horizonLift', 0, 60, 0.1).name('Horizon lift · °'))
+bind(sourceSetupFolder.add(params, 'sourceFov', 1, 180, 0.5).name('Source FOV · °'))
+bind(sourceSetupFolder.addColor(params, 'noSourceColor').name('No-source colour'))
+
+const orientationFolder = sourceGui.addFolder('Orientation')
 const yawController = bind(
   orientationFolder.add(orientation, 'yaw', -180, 180, 0.5).name('Yaw · °'),
 )

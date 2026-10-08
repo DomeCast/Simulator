@@ -107,6 +107,7 @@ export class PlanetariumScene {
   private readonly domeSpringline: Mesh
   private readonly domeSpringlineWire: LineSegments
   private readonly domeDefaultMaterial: MeshBasicMaterial
+  private readonly domeWallMaterial: MeshBasicMaterial
   private readonly projectedImage: Mesh
   private readonly projectedImageMaterial: MeshBasicMaterial
   private readonly ground: Mesh
@@ -171,6 +172,14 @@ export class PlanetariumScene {
 
     this.domeDefaultMaterial = new MeshBasicMaterial({
       color: 0x11053b,
+      side: BackSide,
+      depthWrite: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    })
+    this.domeWallMaterial = new MeshBasicMaterial({
+      color: 0x483f69,
       side: BackSide,
       depthWrite: true,
       polygonOffset: true,
@@ -268,8 +277,9 @@ export class PlanetariumScene {
     this.domeRim.scale.set(domeRadius, 1, domeRadius)
     this.domeRim.position.z = springline
     this.domeDefaultMaterial.color.set(params.domeInteriorColor)
+    this.domeWallMaterial.color.set(params.domeWallColor)
     this.domeShell.material = this.domeDefaultMaterial
-    this.domeSpringline.material = this.domeDefaultMaterial
+    this.domeSpringline.material = this.domeWallMaterial
     this.noSourceColorUniform?.value.set(params.noSourceColor)
 
     const showSpringline = springline > 1e-4
@@ -511,7 +521,7 @@ export class PlanetariumScene {
     this.scene.add(rim)
 
     const springlineGeometry = new CylinderGeometry(1, 1, 1, 64, 1, true)
-    const springline = new Mesh(springlineGeometry, this.domeDefaultMaterial)
+    const springline = new Mesh(springlineGeometry, this.domeWallMaterial)
     springline.rotation.x = Math.PI / 2
     springline.renderOrder = -2
     springline.visible = false

@@ -14,6 +14,7 @@ const parameters: SimulationParameters = {
   horizonLift: 0,
   sourceFov: 90,
   domeInteriorColor: '#11053b',
+  domeWallColor: '#11053b',
   noSourceColor: '#000000',
   mirrorDiameter: 1.3,
   mirrorHeight: 1.15,
@@ -99,6 +100,7 @@ describe('setup export', () => {
     expect(imported.name).toBe('Untitled setup')
     expect(imported.parameters.domeDiameter).toBe(12)
     expect(imported.parameters.domeInteriorColor).toBe('#11053b')
+    expect(imported.parameters.domeWallColor).toBe('#483f69')
     expect(imported.parameters.projectorFov).toBe(54)
     expect(imported.orientation).toEqual({ yaw: 0, pitch: 0, roll: 0 })
     expect(imported.excludeOccludedFromMesh).toBe(true)

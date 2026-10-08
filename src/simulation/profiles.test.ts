@@ -8,6 +8,7 @@ const parameters: SimulationParameters = {
   horizonLift: 20,
   sourceFov: 90,
   domeInteriorColor: '#c4bfb6',
+  domeWallColor: '#334455',
   noSourceColor: '#000000',
   mirrorDiameter: 1.6,
   mirrorHeight: 0.4,
@@ -47,6 +48,7 @@ describe('saved profiles', () => {
     expect(store.load(saved.id)?.parameters.horizonLift).toBe(20)
     expect(store.load(saved.id)?.parameters.sourceFov).toBe(90)
     expect(store.load(saved.id)?.parameters.domeInteriorColor).toBe('#c4bfb6')
+    expect(store.load(saved.id)?.parameters.domeWallColor).toBe('#334455')
     expect(store.load(saved.id)?.parameters.mirrorPitch).toBe(12)
     expect(store.load(saved.id)?.parameters.lensShiftHorizontal).toBe(0)
     expect(store.load(saved.id)?.display.showRays).toBe(false)
@@ -63,6 +65,8 @@ describe('saved profiles', () => {
       '#11053b',
     )
     expect(sanitizeParameters({}).domeInteriorColor).toBe('#11053b')
+    expect(sanitizeParameters({ domeWallColor: '#ABC' }).domeWallColor).toBe('#aabbcc')
+    expect(sanitizeParameters({}).domeWallColor).toBe('#483f69')
     expect(sanitizeParameters({}).noSourceColor).toBe('#000000')
     expect(sanitizeParameters({ noSourceColor: '#ABC' }).noSourceColor).toBe('#aabbcc')
   })
@@ -116,6 +120,7 @@ describe('saved profiles', () => {
     expect(loaded?.parameters.horizonLift).toBe(0)
     expect(loaded?.parameters.sourceFov).toBe(90)
     expect(loaded?.parameters.domeInteriorColor).toBe('#11053b')
+    expect(loaded?.parameters.domeWallColor).toBe('#483f69')
     expect(loaded?.parameters.aspectRatio).toBe('16:9')
     expect(loaded?.display.showRays).toBe(false)
     expect(loaded?.display.showGround).toBe(true)
@@ -205,6 +210,7 @@ describe('saved profiles', () => {
     expect(loaded?.parameters.horizonLift).toBe(0)
     expect(loaded?.parameters.sourceFov).toBe(90)
     expect(loaded?.parameters.domeInteriorColor).toBe('#11053b')
+    expect(loaded?.parameters.domeWallColor).toBe('#483f69')
     expect(storage.getItem('domecast.profiles.v3')).toBeTruthy()
     expect(storage.getItem('domecast.profiles.v1')).toBeNull()
   })

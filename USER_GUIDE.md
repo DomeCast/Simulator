@@ -37,17 +37,19 @@ The ↺ button at the top of the panel restores the default optical setup. It do
 
 ## A first pass: build the room
 
-Stay on the **Rig** tab. Units are metres.
+Stay on the **Setup** tab. Units are metres.
 
-### Environment
+### Dome
 
-1. Set **Dome diameter** to the true inside diameter of the dome.
-2. If the hemisphere sits on a short vertical wall, raise **Dome wall**. `0` puts the equator on the floor.
-3. Raise **Horizon lift** if the projector cannot reach the dome rim. The source horizon moves uniformly up the dome by that angle, the image stretches over the remaining cap, and the area below it is excluded from previews and warp meshes.
-4. **Inner colour** paints the inside of the dome and that wall. With no source image loaded, this is what you see looking in. A loaded image is drawn on top of it, only where the projector actually lights the surface.
-5. **No-source colour** fills any part of that footprint where the source UV falls outside the image (for example after pitching a fisheye past the frame). Default is black.
-5. Set **Mirror diameter** and **Mirror height**. The mirror stays in contact with the rear of the shell: as you raise it, it slides forward along the curve. Below the equator it sits against the cylindrical wall instead.
-6. **Mirror pitch down** tilts the optical face toward the floor (`0` is upright).
+1. Set **Diameter** to the true inside diameter of the dome.
+2. If the hemisphere sits on a short vertical wall, raise **Wall height**. `0` puts the equator on the floor.
+3. **Dome Colour** paints the inside of the hemisphere. With no source image loaded, this is what you see looking in. A loaded image is drawn on top of it, only where the projector actually lights the surface.
+4. **Wall Colour** paints the cylindrical wall under the hemisphere.
+
+### Mirror
+
+1. Set **Mirror diameter** and **Mirror height**. The mirror stays in contact with the rear of the shell: as you raise it, it slides forward along the curve. Below the equator it sits against the cylindrical wall instead.
+2. **Mirror pitch down** tilts the optical face toward the floor (`0` is upright).
 
 ### Projector
 
@@ -68,9 +70,12 @@ Open the **Source** tab.
 1. **Choose image** — only two layouts are accepted:
    - Square (**1:1**), treated as a hemispherical fisheye (zenith in the centre, horizon on the circle, front at the bottom)
    - Twice as wide as it is tall (**2:1**), treated as an equirectangular panorama. The top half covers the dome (zenith at the top edge, horizon across the middle) and the horizontal centre faces the front.
-2. Leave **Source preview** on in the View card. The picture appears only in the projector’s lit footprint, not across the whole dome. That is deliberate: it is what this rig would actually show.
-3. **Yaw**, **Pitch**, and **Roll** turn the image within that footprint. They stay locked until an image is loaded.
-4. **Exclude occluded from mesh** (on by default) drops chassis-shadowed pixels from the preview and from later exports. Turn it off only if you want those rays kept.
+2. **Exclude occluded from mesh** (on by default) drops chassis-shadowed pixels from the preview and from later exports. Turn it off only if you want those rays kept.
+3. Under **Setup**, raise **Horizon lift** if the projector cannot reach the dome rim. The source horizon moves uniformly up the dome by that angle, the image stretches over the remaining cap, and the area below it is excluded from previews and warp meshes.
+4. **Source FOV** sets how much of the source, measured from zenith toward the horizon, is stretched across the dome. `90` maps zenith to the rim. Smaller values stretch a zenith cap to the rim; equirectangular sources may go past `90` so content from below the geometric horizon is squeezed into the dome.
+5. **No-source colour** fills any part of that footprint where the source UV falls outside the image (for example after pitching a fisheye past the frame). Default is black.
+6. Leave **Source preview** on in the View card. The picture appears only in the projector’s lit footprint, not across the whole dome. That is deliberate: it is what this rig would actually show.
+7. Under **Orientation**, **Yaw**, **Pitch**, and **Roll** turn the image within that footprint. They stay locked until an image is loaded.
 
 The image is session-only. Reloading the page, loading a saved setup, or importing JSON does not bring the file back — choose it again.
 
@@ -78,19 +83,21 @@ Switch the camera to **Inside dome** to judge framing from the seats.
 
 ## Save and take the setup with you
 
-**Setups** stores named snapshots in this browser (geometry, display options, and orientation — not the image). Give it a name and **Save**. Load or delete entries from the list. The same name overwrites the previous save.
+Open the **Profiles** tab. Saved setups appear first, then the file export controls.
 
-**Export** is for files you can keep or hand to another machine:
+**Locally saved profiles** store named snapshots in this browser (geometry, display options, and orientation — not the image). Load or delete entries from the list. Name the current rig and choose **Save Locally** underneath the list. The same name overwrites the previous save.
 
-- **Export setup JSON** writes the optical parameters for the DomeCast Player (or any other runtime that reads `domecast-setup-v1`).
-- **Import setup JSON** loads a file you exported earlier.
+Below that, export is for files you can keep or hand to another machine:
+
+- **Export Profile JSON** writes the optical parameters for the DomeCast Player (or any other runtime that reads `domecast-setup-v1`).
+- **Import Profile JSON** loads a file you exported earlier.
 - **Download warp mesh** writes a Paul Bourke `.data` mesh from the current rig and source layout. Load a source image first so the mesh type matches fisheye or equirectangular. Details of the file format are in the [README](README.md).
 
 ## A short checklist
 
-1. Enter the real dome and mirror sizes on **Rig**.
+1. Enter the real dome and mirror sizes on **Setup**.
 2. Place the projector until coverage is high, overshoot is low, and the beam clears the chassis.
 3. Load a 1:1 or 2:1 test image on **Source** and check it from **Inside dome**.
-4. Save the setup in the browser, then export JSON (and a warp mesh if you need one).
+4. On **Profiles**, save the setup in the browser, then export JSON (and a warp mesh if you need one).
 
 If something looks wrong, reset with ↺ and start from the defaults — a 10 m dome, 1.3 m mirror, and a 16:9 projector are already a working example.
